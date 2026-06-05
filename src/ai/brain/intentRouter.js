@@ -12,7 +12,7 @@ const REQUIRES_CONFIRMATION = new Set([
   'SCROLL_PAGE', 'ZOOM_MAP', 'PAY_BILL', 'DELETE_DATA', 'ADMIN_ACTION',
 ]);
 
-const INTENT_TO_PATH = {
+export const INTENT_TO_PATH = {
   navigate_electricity:    '/electricity-menu',
   navigate_gas:            '/gas-menu',
   navigate_water:          '/water',

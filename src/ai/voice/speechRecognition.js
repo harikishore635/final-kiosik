@@ -11,6 +11,12 @@
 
 import { sarvamSTT, getSarvamCode } from '../api/sarvamApi.js';
 import { getSTTLangCode } from '../brain/multilingualProcessor.js';
+import { whisperTranscribe, loadWhisper, isWhisperLoaded } from './localSTT.js';
+
+// Languages where Sarvam bridges through Hindi — local Whisper is more accurate
+const WHISPER_PREFERRED_LANGS = new Set([
+  'ur', 'mai', 'kok', 'doi', 'ne', 'sa', 'brx', 'ks', 'mni', 'sat', 'sd',
+]);
 
 let _recognition = null;
 let _mediaRecorder = null;
@@ -250,11 +256,92 @@ async function runSarvamChunk(localSessionId) {
   }
 }
 
+// ── Tier 3: Local Whisper STT — offline, 4GB-RAM-safe, all 22 Indian langs ──
+
+async function runWhisperChunk(localSessionId) {
+  if (!_shouldRestart || localSessionId !== _sessionId) return;
+
+  try {
+    const stream = await ensureStream();
+    const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      ? 'audio/webm;codecs=opus'
+      : 'audio/webm';
+
+    _audioChunks = [];
+    _mediaRecorder = new MediaRecorder(stream, { mimeType });
+
+    _mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) _audioChunks.push(e.data);
+    };
+
+    _mediaRecorder.onstop = async () => {
+      if (localSessionId !== _sessionId) return;
+
+      const blob = new Blob(_audioChunks, { type: mimeType });
+      _audioChunks = [];
+
+      if (blob.size < 1000) {
+        if (_shouldRestart && localSessionId === _sessionId && _mode === 'whisper') {
+          setTimeout(() => runWhisperChunk(localSessionId), RESTART_MS);
+        }
+        return;
+      }
+
+      try {
+        _onInterim?.('...');
+        const baseLang = (_language || 'hi').split('-')[0];
+        const result = await whisperTranscribe(blob, baseLang);
+        const transcript = result?.transcript?.trim() || '';
+        if (transcript) _onResult?.(transcript);
+      } catch (err) {
+        // Local Whisper failed — fall back to Sarvam with Hindi bridge
+        console.warn('[STT] Local Whisper failed, falling to Sarvam bridge:', err.message);
+        try {
+          const langCode = getSarvamCode(_language);
+          const sarvamResult = await sarvamSTT(blob, langCode);
+          const transcript = sarvamResult?.transcript?.trim() || '';
+          if (transcript) _onResult?.(transcript);
+        } catch (sarvamErr) {
+          _onError?.(sarvamErr.message || 'stt_failed');
+        }
+      } finally {
+        if (_shouldRestart && localSessionId === _sessionId && _mode === 'whisper') {
+          setTimeout(() => runWhisperChunk(localSessionId), RESTART_MS);
+        }
+      }
+    };
+
+    _mediaRecorder.start(250);
+    _isListening = true;
+    _mode = 'whisper';
+
+    attachSilenceDetector(stream, () => {
+      if (_mediaRecorder?.state === 'recording' && localSessionId === _sessionId) {
+        _mediaRecorder.stop();
+      }
+    });
+
+    setTimeout(() => {
+      if (_mediaRecorder?.state === 'recording' && localSessionId === _sessionId) {
+        _mediaRecorder.stop();
+      }
+    }, MAX_CHUNK_MS);
+
+  } catch (err) {
+    _onError?.(err.message || 'mic_denied');
+    if (_shouldRestart && localSessionId === _sessionId) {
+      _mode = 'idle';
+      runSarvamChunk(localSessionId);
+    }
+  }
+}
+
 // ── Primary entry point ───────────────────────────────────────────────────────
 
 /**
- * Start STT. Tries browser SpeechRecognition first for fast interim results.
- * Falls back to Sarvam MediaRecorder when browser STT unavailable or forced.
+ * Start STT. Routes based on language:
+ *   Tier-1 langs (en, hi, ta, etc.) → Browser STT → Sarvam
+ *   Tier-2 langs (mai, brx, ur, etc.) → Bhashini (native) → Sarvam bridge fallback
  */
 export function startSTT(opts = {}) {
   stopSTT();
@@ -265,20 +352,27 @@ export function startSTT(opts = {}) {
   _language = opts.language || _defaultLanguage || 'en';
   _shouldRestart = opts.continuous !== false;
 
-  // Try browser STT first (fast, interim results)
+  const baseLang = (_language || 'en').split('-')[0];
+
+  // Tier-2 languages → local Whisper (browser Web Speech has no model for these)
+  if (WHISPER_PREFERRED_LANGS.has(baseLang)) {
+    const localSessionId = ++_sessionId;
+    runWhisperChunk(localSessionId);
+    return true;
+  }
+
+  // Tier-1 languages → try browser STT first (fast, interim results)
   if (isWebSpeechSupported() && opts.preferSarvam !== true) {
     const started = startBrowserSTT({
       language: _language,
       onResult: _onResult,
       onInterim: _onInterim,
       onError: (err) => {
-        // If browser STT errors, fall back to Sarvam
         const criticalErrors = new Set(['not-allowed', 'service-not-allowed']);
         if (criticalErrors.has(err)) {
           _onError(err);
           return;
         }
-        // Non-critical error: switch to Sarvam
         if (_shouldRestart && _mode === 'browser') {
           _mode = 'idle';
           const localSessionId = ++_sessionId;

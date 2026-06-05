@@ -263,25 +263,22 @@ const VoiceNavigation = () => {
   }, []);
 
   // ── Command processor — with natural voice responses ────────────────────
-  const processCommand = useCallback((text) => {
+  const processCommand = useCallback(async (text) => {
     if (!text) return;
     const normalizedText = normalizeVoiceText(text);
     const lang = getBaseLang(i18n.language);
     const langCommands = commands[lang] || commands.en;
     const allCommands = { ...commands.en, ...langCommands };
 
-    let matched = false;
+    // 1. Fast keyword match for navigation shortcuts
     for (const [keyword, action] of Object.entries(allCommands)) {
       if (normalizedText.includes(normalizeVoiceText(keyword))) {
-        matched = true;
-        // Stop any currently playing TTS before acting (barge-in effect)
         stopTTS();
         stopBargeInListener();
-
         if (action === 'BACK') {
           navigate(-1);
           announceGoBack(lang);
-          showFeedback(`← Going back`);
+          showFeedback('← Going back');
         } else if (action === 'LOGOUT') {
           logout().finally(() => navigate('/'));
           announceLogout(lang);
@@ -296,13 +293,46 @@ const VoiceNavigation = () => {
           announceNavigation(pageName, lang);
           showFeedback(`→ ${pageName}`);
         }
-        break;
+        return;
       }
     }
 
-    if (!matched) {
+    // 2. No keyword match → send to SUVIDHA AI chatbot
+    showFeedback('Thinking...');
+    try {
+      const pageCtx = window.location.pathname.includes('electricity') ? 'electricity'
+        : window.location.pathname.includes('gas') ? 'gas'
+        : window.location.pathname.includes('municipal') ? 'municipal'
+        : '';
+
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, language: lang, context: pageCtx }),
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (!resp.ok) throw new Error('chat api failed');
+      const data = await resp.json();
+      const reply = data.reply || '';
+
+      // Speak the response
+      stopTTS();
+      import('../utils/naturalVoice').then(m => m.naturalSpeak(reply, { language: lang, interrupt: true }));
+      showFeedback(reply.slice(0, 60) + (reply.length > 60 ? '…' : ''));
+
+      // Execute action if returned
+      if (data.action) {
+        const { type, path, fieldName, value } = data.action;
+        if (type === 'NAVIGATE_PAGE' && path) {
+          setTimeout(() => navigate(path), 800);
+        } else if (type === 'FILL_FORM' && fieldName) {
+          window.dispatchEvent(new CustomEvent('suvidha:voice-fill', { detail: { fieldName, value } }));
+        }
+      }
+    } catch {
       announceNotUnderstood(lang);
-      showFeedback(t('voice.notUnderstood', "Didn't catch that — try again"));
+      showFeedback("Didn't catch that — try again");
     }
   }, [i18n.language, navigate, showFeedback, t]);
 

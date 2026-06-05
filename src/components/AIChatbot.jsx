@@ -5,7 +5,6 @@ import { MessageCircle, X, Minus, Send, Mic, MicOff, Volume2, VolumeX, Zap } fro
 import { naturalSpeak, startBargeInListener, stopBargeInListener } from '../utils/naturalVoice';
 import { stopTTS } from '../utils/ttsService';
 import { startSTT, stopSTT } from '../ai/voice/speechRecognition';
-import { callNvidiaAI, MODELS } from '../ai/api/nvidiaApi';
 import SYSTEM_PROMPT from '../ai/prompts/systemPrompt';
 
 const extractContext = (pathname) => {
@@ -64,10 +63,14 @@ const STT_LANG_MAP = {
 };
 
 const PROVIDER_LABELS = {
-  'NVIDIA NIM · Nemotron': '⚡ NVIDIA Nemotron Ultra',
-  'sarvam-nim': '🇮🇳 Sarvam · NVIDIA NIM',
-  'llama-nim': '⚡ Llama 3.3 · NVIDIA NIM',
-  'offline_mode': '📴 Offline mode',
+  'suvidha-ai': '✦ SUVIDHA AI',
+  'sarvam-105b': '✦ SUVIDHA AI',
+  'sarvam-nim': '✦ SUVIDHA AI',
+  'llama-nim': '✦ SUVIDHA AI',
+  'NVIDIA NIM · Nemotron': '✦ SUVIDHA AI',
+  'offline_mode': '✦ SUVIDHA AI',
+  'huggingface': '✦ SUVIDHA AI',
+  'none': '✦ SUVIDHA AI',
 };
 
 // Conversation history for context window
@@ -113,6 +116,15 @@ const AIChatbot = () => {
         ur: "آداب! میں SUVIDHA AI ہوں — NVIDIA NIM سے۔ بجلی، گیس، بلدیاتی خدمات میں مدد کرتا ہوں۔ کیا چاہیے؟",
         or: "ନମସ୍କାର! ମୁଁ SUVIDHA AI — NVIDIA NIM ଦ୍ୱାରା। ବିଦ୍ୟୁତ, ଗ୍ୟାସ, ନଗର ସେବାରେ ସାହାଯ୍ୟ। କ'ଣ ଦରକାର?",
         brx: "नमस्कार! मां SUVIDHA AI — NVIDIA NIM खालामजों। बिजुली, गेस, नगर सेवायां सिबियाय। मां खामानि लागोन?",
+        mai: "प्रणाम! हम SUVIDHA AI छी — NVIDIA NIM द्वारा संचालित। बिजली, गैस, नगर सेवा में 22 भाषामे सहायता करैत छी। की चाही?",
+        ne:  "नमस्कार! म SUVIDHA AI हुँ — NVIDIA NIM द्वारा संचालित। बिजुली, ग्यास, नगर सेवाहरूमा सहयोग गर्छु। के चाहिन्छ?",
+        kok: "नमस्कार! हांव SUVIDHA AI — NVIDIA NIM वर्वी। विज, गॅस, नगर सेवांनी 22 भाशांनी मजत करता. किते जाय?",
+        doi: "नमस्कार! मैं SUVIDHA AI हां — NVIDIA NIM राहें। बिजली, गैस, शहर सेवाएं च मदद। की चाहिए?",
+        sa:  "नमस्ते! अहं SUVIDHA AI अस्मि — NVIDIA NIM शक्त्या। विद्युत्, गैस, नगर-सेवासु 22 भाषासु साहाय्यं करोमि। किं वाञ्छितम्?",
+        ks:  "السلام علیکم! مے SUVIDHA AI چھُس — NVIDIA NIM سیتی۔ بجلی، گیس، شہری خدمتن مدد کرتھ۔ کیا چھُ ضرورت؟",
+        mni: "ꯑꯣꯏꯅꯥ ꯍꯥꯏ! ꯑꯩ SUVIDHA AI — NVIDIA NIM ꯗꯨꯅꯥ। ꯕꯤꯖꯂꯤ, ꯒꯦꯁ, ꯅꯧꯄꯥꯂꯒꯤ ꯁꯦꯚꯥ ꯑꯁꯤꯗꯥ ꯃꯇꯦꯡ ꯄꯥꯡꯂꯒꯩ। ꯃꯁꯤ ꯇꯧꯗꯨꯅꯥ?",
+        sat: "ᱡᱚᱦᱟᱨ! ᱤᱸ SUVIDHA AI — NVIDIA NIM ᱨᱮᱭᱟᱜ। ᱵᱤᱡᱽᱞᱤ, ᱜᱮᱥ, ᱱᱟᱜᱟᱨ ᱥᱮᱵᱟᱭ ᱢᱮᱫ ᱠᱟᱱᱟᱢ। ᱢᱤᱫ ᱞᱟᱦᱟᱛᱤᱭᱟ?",
+        sd:  "السلام عليڪم! مان SUVIDHA AI آهيان — NVIDIA NIM سان. بجلي، گيس، شهري خدمتن ۾ مدد. ڇا گهرجي؟",
       };
       const welcomeText = greetings[userLang] || greetings.en;
       setMessages([{
@@ -169,39 +181,38 @@ const AIChatbot = () => {
   }, [navigate, i18n]);
 
   const callNvidiaChat = useCallback(async (userMessage, onChunk) => {
-    // Build messages array with rolling 10-turn context
     conversationHistory.push({ role: 'user', content: userMessage });
     if (conversationHistory.length > 20) conversationHistory.splice(0, 2);
 
     const pageContext = extractContext(location.pathname);
-    const contextNote = pageContext
-      ? `[User is on: ${pageContext} department page. Path: ${location.pathname}]`
-      : `[User is on: ${location.pathname}]`;
-
-    const systemWithContext = SYSTEM_PROMPT + `\n\n## CURRENT SESSION\nLanguage: ${userLang}\nPage context: ${contextNote}\nCitizen: ${sessionStorage.getItem('userName') || 'Guest'}`;
-
-    const messages = [
-      { role: 'system', content: systemWithContext },
-      ...conversationHistory.slice(-10),
-    ];
 
     try {
-      setLastProvider('NVIDIA NIM · Nemotron');
-      const aiResp = await callNvidiaAI(messages, {
-        model: MODELS.PRIMARY,
-        stream: true,
-        onChunk,
-        temperature: 0.35,
-        maxTokens: 500,
+      setLastProvider('sarvam-105b');
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          language: userLang,
+          context: pageContext || '',
+        }),
+        signal: AbortSignal.timeout(20000),
       });
 
-      // Push assistant reply to history
-      const replyText = typeof aiResp === 'object' ? aiResp.response || '' : String(aiResp);
-      conversationHistory.push({ role: 'assistant', content: replyText });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
 
-      return aiResp;
-    } catch {
-      return { response: t('chatbot.error', 'Service temporarily unavailable. Please use the menu.'), intent: 'error', action: null };
+      const replyText = data.reply || t('chatbot.error', 'No response received.');
+      conversationHistory.push({ role: 'assistant', content: replyText });
+      setLastProvider(data.provider || 'sarvam-105b');
+
+      // Simulate streaming by calling onChunk with full text
+      if (onChunk) onChunk(replyText, replyText);
+
+      return { response: replyText, language: data.language || userLang, action: null };
+    } catch (err) {
+      console.error('[Chatbot] API call failed:', err.message);
+      return { response: t('chatbot.unavailable', 'Service temporarily unavailable. Please use the menu to access services.'), intent: 'error', action: null };
     }
   }, [location.pathname, userLang, t]);
 
@@ -240,10 +251,11 @@ const AIChatbot = () => {
     const action = typeof finalResponse === 'object' ? finalResponse?.action : null;
     const suggestions = typeof finalResponse === 'object' ? finalResponse?.suggestions : null;
     const provider = lastProvider || 'NVIDIA NIM';
+    const detectedLang = typeof finalResponse === 'object' ? finalResponse?.language : null;
 
     setMessages(prev => prev.map(m =>
       m.id === botId
-        ? { ...m, text: replyText, streaming: false, action, suggestions, provider }
+        ? { ...m, text: replyText, streaming: false, action, suggestions, provider, language: detectedLang || userLang }
         : m
     ));
     setIsTyping(false);
@@ -408,11 +420,20 @@ const AIChatbot = () => {
                         ))}
                       </div>
                     )}
-                    {/* Provider badge on last bot message */}
-                    {msg.type === 'bot' && !msg.streaming && msg.provider && (
-                      <div className="flex items-center gap-1 mt-0.5 text-[10px] text-gray-400">
-                        <Zap size={9} className="text-green-500" />
-                        {PROVIDER_LABELS[msg.provider] || msg.provider}
+                    {/* Language + Provider badge on last bot message */}
+                    {msg.type === 'bot' && !msg.streaming && (
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        {msg.language && msg.language !== 'en' && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700 border border-orange-200">
+                            🇮🇳 {msg.language.toUpperCase()}
+                          </span>
+                        )}
+                        {msg.provider && (
+                          <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                            <Zap size={9} className="text-green-500" />
+                            {PROVIDER_LABELS[msg.provider] || msg.provider}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

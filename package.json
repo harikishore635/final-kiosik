@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
     "axios": "^1.16.1",
     "i18next": "^26.2.0",
     "i18next-browser-languagedetector": "^8.2.1",
@@ -24,6 +25,7 @@
     "react-router-dom": "^7.15.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.5.0",
     "playwright": "^1.60.0",

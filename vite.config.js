@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
 
+  optimizeDeps: {
+    exclude: ['@huggingface/transformers'],
+  },
+
   server: {
     port: 3000,
     strictPort: false,   // fall back to next port if 3000 is busy

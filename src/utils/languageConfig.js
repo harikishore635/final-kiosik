@@ -10,23 +10,37 @@ export const SARVAM_SUPPORTED_LANGUAGES = [
   'en', 'hi', 'ta', 'as', 'bn', 'te', 'mr', 'gu', 'kn', 'ml', 'pa', 'or'
 ];
 
-export const ALL_LANGUAGES = [
-  // ─── Core supported languages (static JSON) ───
-  { code: 'en', label: 'English',    native: 'English',    script: 'Latin',      sarvamCode: 'en-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'hi', label: 'Hindi',      native: 'हिन्दी',      script: 'Devanagari', sarvamCode: 'hi-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'ta', label: 'Tamil',      native: 'தமிழ்',       script: 'Tamil',      sarvamCode: 'ta-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'as', label: 'Assamese',   native: 'অসমীয়া',      script: 'Bengali',    sarvamCode: 'as-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
+// Languages bridged via Sarvam translate (STT via Whisper, translate to bridge lang first)
+export const WHISPER_BRIDGE_LANGUAGES = [
+  'ur', 'mai', 'kok', 'doi', 'ne', 'sa', 'brx', 'ks', 'mni', 'sat', 'sd'
+];
 
-  // ─── Additional Indian languages (dynamic via Sarvam Translate) ───
-  { code: 'bn', label: 'Bengali',    native: 'বাংলা',       script: 'Bengali',    sarvamCode: 'bn-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'te', label: 'Telugu',     native: 'తెలుగు',       script: 'Telugu',     sarvamCode: 'te-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'mr', label: 'Marathi',    native: 'मराठी',       script: 'Devanagari', sarvamCode: 'mr-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'gu', label: 'Gujarati',   native: 'ગુજરાતી',     script: 'Gujarati',   sarvamCode: 'gu-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'kn', label: 'Kannada',    native: 'ಕನ್ನಡ',        script: 'Kannada',    sarvamCode: 'kn-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'ml', label: 'Malayalam',  native: 'മലയാളം',      script: 'Malayalam',  sarvamCode: 'ml-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'pa', label: 'Punjabi',    native: 'ਪੰਜਾਬੀ',       script: 'Gurmukhi',   sarvamCode: 'pa-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'or', label: 'Odia',       native: 'ଓଡ଼ିଆ',        script: 'Odia',       sarvamCode: 'od-IN', sttSupported: true, ttsSupported: true, translateSupported: true },
-  { code: 'ur', label: 'Urdu',       native: 'اردو',         script: 'Arabic',     sarvamCode: 'ur-IN', sttSupported: false, ttsSupported: false, translateSupported: false },
+export const ALL_LANGUAGES = [
+  // ─── Tier 1: Full Sarvam STT + TTS + Translate ───────────────────────────────
+  { code: 'en',  label: 'English',   native: 'English',      script: 'Latin',      sarvamCode: 'en-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'hi',  label: 'Hindi',     native: 'हिन्दी',        script: 'Devanagari', sarvamCode: 'hi-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'ta',  label: 'Tamil',     native: 'தமிழ்',         script: 'Tamil',      sarvamCode: 'ta-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'as',  label: 'Assamese',  native: 'অসমীয়া',        script: 'Bengali',    sarvamCode: 'as-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'bn',  label: 'Bengali',   native: 'বাংলা',         script: 'Bengali',    sarvamCode: 'bn-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'te',  label: 'Telugu',    native: 'తెలుగు',         script: 'Telugu',     sarvamCode: 'te-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'mr',  label: 'Marathi',   native: 'मराठी',         script: 'Devanagari', sarvamCode: 'mr-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'gu',  label: 'Gujarati',  native: 'ગુજરાતી',       script: 'Gujarati',   sarvamCode: 'gu-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'kn',  label: 'Kannada',   native: 'ಕನ್ನಡ',          script: 'Kannada',    sarvamCode: 'kn-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'ml',  label: 'Malayalam', native: 'മലയാളം',        script: 'Malayalam',  sarvamCode: 'ml-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'pa',  label: 'Punjabi',   native: 'ਪੰਜਾਬੀ',         script: 'Gurmukhi',   sarvamCode: 'pa-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  { code: 'or',  label: 'Odia',      native: 'ଓଡ଼ିଆ',          script: 'Odia',       sarvamCode: 'or-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: null  },
+  // ─── Tier 2: Whisper STT + Sarvam-bridged Translate ─────────────────────────
+  { code: 'ur',  label: 'Urdu',      native: 'اردو',           script: 'Arabic',     sarvamCode: 'hi-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: 'hi'  },
+  { code: 'mai', label: 'Maithili',  native: 'मैथिली',         script: 'Devanagari', sarvamCode: 'hi-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: 'hi'  },
+  { code: 'kok', label: 'Konkani',   native: 'कोंकणी',         script: 'Devanagari', sarvamCode: 'hi-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: 'hi'  },
+  { code: 'doi', label: 'Dogri',     native: 'डोगरी',          script: 'Devanagari', sarvamCode: 'hi-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: 'hi'  },
+  { code: 'ne',  label: 'Nepali',    native: 'नेपाली',         script: 'Devanagari', sarvamCode: 'hi-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: 'hi'  },
+  { code: 'sa',  label: 'Sanskrit',  native: 'संस्कृतम्',       script: 'Devanagari', sarvamCode: 'hi-IN',  sttSupported: true,  ttsSupported: false, translateSupported: true,  bridge: 'hi'  },
+  { code: 'brx', label: 'Bodo',      native: 'बड़ो',            script: 'Devanagari', sarvamCode: 'hi-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: 'hi'  },
+  { code: 'ks',  label: 'Kashmiri',  native: 'كٲشُر',          script: 'Arabic',     sarvamCode: 'hi-IN',  sttSupported: true,  ttsSupported: false, translateSupported: true,  bridge: 'hi'  },
+  { code: 'mni', label: 'Manipuri',  native: 'মৈতৈলোন্',        script: 'Bengali',    sarvamCode: 'bn-IN',  sttSupported: true,  ttsSupported: true,  translateSupported: true,  bridge: 'bn'  },
+  { code: 'sat', label: 'Santali',   native: 'ᱥᱟᱱᱛᱟᱲᱤ',        script: 'OlChiki',    sarvamCode: 'bn-IN',  sttSupported: true,  ttsSupported: false, translateSupported: true,  bridge: 'bn'  },
+  { code: 'sd',  label: 'Sindhi',    native: 'سنڌي',           script: 'Arabic',     sarvamCode: 'hi-IN',  sttSupported: true,  ttsSupported: false, translateSupported: true,  bridge: 'hi'  },
 ];
 
 /**

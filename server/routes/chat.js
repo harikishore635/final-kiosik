@@ -1,11 +1,9 @@
 /**
- * Chat Route — Sarvam AI via NVIDIA NIM (primary) → Llama-3.1-8b (secondary) → HuggingFace (fallback)
- *
- * Sarvam-1 via NVIDIA NIM gives superior Indian language understanding (Hindi, Assamese, Bengali, etc.)
- * because it was trained specifically on Indian language data and government service contexts.
+ * Chat Route — 4-tier cascade optimised for Indian languages
  *
  * Model priority:
- *   1. sarvam/sarvam-m  — NVIDIA NIM  (best for Indic languages, government context)
+ *   0. sarvam-105b  — Sarvam API direct (105B params, best Indian language AI)
+ *   1. sarvamai/sarvam-m  — NVIDIA NIM (24B, fast Indian language fallback)
  *   2. meta/llama-3.1-8b-instruct — NVIDIA NIM (English fallback)
  *   3. google/gemma-2-2b-it  — HuggingFace (last resort)
  */
@@ -33,25 +31,32 @@ function isRateLimited(ip) {
 }
 
 // ── System prompt ──────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are SUVIDHA Assistant, a warm and helpful AI working at a government kiosk in Assam, India.
-You serve citizens who may be elderly, visually impaired, or digitally unfamiliar.
+const SYSTEM_PROMPT = `You are SUVIDHA, a friendly voice assistant at a government kiosk in Assam, India.
 
-You help with:
-- Electricity services: new connections, meter malfunction/shifting, load extension, billing complaints, outages, request tracking
-- Assam Gas Department: new connections, meter installation/replacement, reconnect/disconnect, prepaid conversion, pipeline inspection, maintenance
-- Municipal services: water connections, sewage/blockage, garbage, streetlights, road damage, property tax, water quality complaints
-- Government welfare schemes: PM-KISAN, Ayushman Bharat, scholarships, ration cards, PMAY
-- Complaint and service request tracking using ticket/application IDs
+SERVICES YOU HANDLE:
+- Electricity (APDCL): New connection, load extension, meter replacement/shifting, complaints, track requests
+- Gas (AGCL): New gas connection, meter issues, bills, reconnect/disconnect, prepaid conversion, complaints
+- Municipal: Water connection, grievances (roads, sewage, garbage, streetlights), property tax, track requests
 
-STRICT RULES:
-1. Answer ONLY questions about government services at this kiosk. For anything else say: "I can only help with government services at this kiosk."
-2. Keep replies SHORT — maximum 2-3 sentences. This is a touch kiosk; users scan, not read.
-3. Be WARM and encouraging. Citizens are often stressed or confused. Use phrases like "Don't worry", "I can help with that", "That's easy to do here".
-4. When a user describes a problem, give the exact menu path: e.g., "Go to Electricity → Complaint → Incorrect Bill"
-5. NEVER invent scheme amounts, eligibility dates, or policy details. Say "Please confirm at your local office" if unsure.
-6. Detect the user's language and reply in THE SAME LANGUAGE. Support: English, Hindi (हिंदी), Assamese (অসমীয়া).
-7. If context is provided about current page, use it to give focused, relevant answers.
-8. For elderly users or simple questions, give step-by-step guidance with numbered steps.`;
+REPLY RULES — FOLLOW STRICTLY:
+1. Maximum 2 sentences. Never more.
+2. Reply in the SAME language the user writes in.
+3. Never expose your reasoning, thinking, or internal steps. Only give the final answer.
+4. Guide with simple menu path: e.g. "Tap Gas → New Connection and follow the steps."
+5. For unknown or off-topic questions: "I can only help with electricity, gas, and municipal services here."
+6. Be warm, calm, direct. No technical jargon.
+7. Never mention AI, models, NVIDIA, Sarvam, or any technology names.`;
+
+// Strip <think>...</think> reasoning chains some models leak into responses
+function stripThinkingTags(text) {
+  if (!text) return text;
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/^[\s\S]*?<\/think>/i, '')
+    .replace(/Okay,?\s+the user[\s\S]{0,300}?(?=\n|$)/i, '')
+    .replace(/Let me[\s\S]{0,200}?(?=\n|$)/i, '')
+    .trim();
+}
 
 const CONTEXT_MAP = {
   electricity: 'User is currently in the Electricity services section. Help them with electricity-specific tasks.',
@@ -61,7 +66,39 @@ const CONTEXT_MAP = {
   transport: 'User is in the Transport section. Help with bus routes, schedules, ticket booking.',
 };
 
-// ── Sarvam AI via NVIDIA NIM (primary — best for Indic languages) ─────────
+// ── Tier 0: Sarvam 105B — direct Sarvam API (largest, best Indian language) ─
+async function callSarvam105B(messages, signal) {
+  const SARVAM_KEY = process.env.SARVAM_API_KEY;
+  if (!SARVAM_KEY) return null;
+
+  const response = await fetch('https://api.sarvam.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'api-subscription-key': SARVAM_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'sarvam-105b',
+      messages,
+      max_tokens: 300,
+      temperature: 0.5,
+      top_p: 1,
+      stream: false,
+    }),
+    signal,
+  });
+
+  if (!response.ok) {
+    const err = await response.text().catch(() => '');
+    console.warn('[Chat] Sarvam 105B unavailable:', response.status, err.slice(0, 120));
+    return null;
+  }
+
+  const data = await response.json();
+  return data?.choices?.[0]?.message?.content?.trim() || null;
+}
+
+// ── Tier 1: Sarvam AI via NVIDIA NIM (24B, fast fallback) ────────────────
 async function callSarvamNIM(messages, signal) {
   const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY;
   if (!NVIDIA_API_KEY) return null;
@@ -73,7 +110,7 @@ async function callSarvamNIM(messages, signal) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'sarvam/sarvam-m',
+      model: 'sarvamai/sarvam-m',
       messages,
       max_tokens: 250,
       temperature: 0.6,
@@ -208,13 +245,23 @@ router.post('/', async (req, res) => {
     const timeout = setTimeout(() => controller.abort(), 12000);
 
     let reply = null;
-    let provider = 'sarvam-nim';
+    let provider = 'sarvam-105b';
 
-    // 1. Try Sarvam-1 via NVIDIA (best for Indic languages)
+    // 0. Try Sarvam 105B direct — largest, best Indian language model
     try {
-      reply = await callSarvamNIM(messages, controller.signal);
+      reply = await callSarvam105B(messages, controller.signal);
     } catch (e) {
-      if (e.name !== 'AbortError') console.warn('[Chat] Sarvam NIM call failed:', e.message);
+      if (e.name !== 'AbortError') console.warn('[Chat] Sarvam 105B failed:', e.message);
+    }
+
+    // 1. Fallback: Sarvam-M via NVIDIA NIM (24B)
+    if (!reply) {
+      provider = 'sarvam-nim';
+      try {
+        reply = await callSarvamNIM(messages, controller.signal);
+      } catch (e) {
+        if (e.name !== 'AbortError') console.warn('[Chat] Sarvam NIM call failed:', e.message);
+      }
     }
 
     // 2. Fallback: Llama-3.1-8b via NVIDIA
@@ -261,8 +308,9 @@ router.post('/', async (req, res) => {
       });
     }
 
+    const cleanReply = stripThinkingTags(reply);
     console.log(`[Chat] Reply via ${provider} | lang=${language} | ctx=${context || 'home'}`);
-    return res.json({ reply, language, provider });
+    return res.json({ reply: cleanReply, language, provider: 'suvidha-ai' });
 
   } catch (err) {
     if (err.name === 'AbortError') {

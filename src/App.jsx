@@ -1,14 +1,13 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { VoiceAssistantProvider } from './ai/provider/VoiceAssistantProvider';
 import { SessionProvider } from './context/SessionContext';
-import AIOverlay from './components/ai/AIOverlay';
 import AccessibilityProvider, { useAccessibility } from './components/AccessibilityProvider';
-import VoiceInstructionEngine from './components/VoiceInstructionEngine';
 import EmergencyAlertBanner from './components/EmergencyAlertBanner';
 import EmergencyQuickAccess from './components/EmergencyQuickAccess';
 import ScreenReaderOverlay from './components/ScreenReaderOverlay';
 import VoiceNavigation from './components/VoiceNavigation';
+import AIChatbot from './components/AIChatbot';
 
 // Eagerly loaded pages
 import { Landing, Login, Home, ModeSelection, OfficeLocator } from './pages';
@@ -86,34 +85,42 @@ function LoadingScreen() {
   );
 }
 
-/**
- * AIShell — Wraps the app routes and renders AI overlay on citizen-facing pages.
- * Must be inside both BrowserRouter AND VoiceAssistantProvider.
- */
 function AIShell({ children }) {
   const { pathname: path } = useLocation();
   const { userMode } = useAccessibility();
   const isBlind = userMode === 'blind';
-  const showAI = !isBlind && !AI_EXCLUDED_PATHS.has(path) && !path.startsWith('/admin') &&
-    !path.startsWith('/super-admin') && !path.startsWith('/security') &&
-    !path.startsWith('/kiosk-ops') && !path.startsWith('/org/');
+  const isAdminPath = path.startsWith('/admin') || path.startsWith('/super-admin') ||
+    path.startsWith('/security') || path.startsWith('/kiosk-ops') || path.startsWith('/org/');
+  const isAuthPath = AI_EXCLUDED_PATHS.has(path);
+  const showChatbot = !isAdminPath && !isAuthPath;
 
   return (
     <div className="kiosk-stage">
       <EmergencyAlertBanner />
       <EmergencyQuickAccess />
-      <VoiceInstructionEngine />
-      <ScreenReaderOverlay />
+      {/* ScreenReaderOverlay only for blind mode — avoids duplicate voice with VoiceNavigation */}
+      {isBlind && <ScreenReaderOverlay />}
       <VoiceNavigation />
 
       {children}
 
-      {showAI && <AIOverlay />}
+      {/* AIChatbot — floating text chat widget, always visible on citizen pages */}
+      {showChatbot && <AIChatbot />}
     </div>
   );
 }
 
 export default function App() {
+  // Preload Whisper model in background after 5s — ready before user speaks
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      import('./ai/voice/localSTT.js')
+        .then(({ loadWhisper }) => loadWhisper())
+        .catch(() => { /* non-fatal — STT falls back to Sarvam */ });
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <BrowserRouter>
       <SessionProvider>

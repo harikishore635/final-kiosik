@@ -9,8 +9,9 @@ const LANGUAGE_MAP = {
   bn: 'bn-IN', or: 'or-IN', pa: 'pa-IN', as: 'as-IN',
 };
 
+// Languages Sarvam bridges through Hindi (TTS quality acceptable, STT uses local Whisper)
 const HINDI_BRIDGE_LANGS = new Set([
-  'ur', 'ks', 'sd', 'mai', 'kok', 'doi', 'ne', 'sa', 'mni', 'sat', 'as',
+  'ur', 'ks', 'sd', 'mai', 'kok', 'doi', 'ne', 'sa', 'mni', 'sat',
 ]);
 
 const CACHE_LIMIT = 60;

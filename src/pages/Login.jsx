@@ -27,6 +27,11 @@ const ALT_AUTH_DB = {
   'MC-001': { uid: '222233334444', name: 'Meera Shah', mobile: '9111222333', type: 'municipal', dept: 'Municipal' },
   'WC-GHY-2025': { uid: '999988887777', name: 'Rajesh Kumar', mobile: '9876543210', type: 'municipal', dept: 'Municipal' },
   'PT-009876': { uid: '111122223333', name: 'Kamala Devi', mobile: '9123456780', type: 'municipal', dept: 'Municipal' },
+  // ── DEMO numbers — real phones for hackathon ─────────────────────────────
+  'DEMO-AS-01': { uid: '866769213800', name: 'Priya Baruah', mobile: '8667692138', type: 'electricity', dept: 'Electricity', language: 'as' },
+  'DEMO-HI-02': { uid: '739731161300', name: 'Rahul Das',    mobile: '7397311613', type: 'gas',         dept: 'Gas',         language: 'hi' },
+  'DEMO-BN-03': { uid: '790480284900', name: 'Meena Gogoi',  mobile: '7904802849', type: 'municipal',    dept: 'Municipal',   language: 'bn' },
+  'DEMO-EN-04': { uid: '730503711700', name: 'Arun Barua',   mobile: '7305037117', type: 'electricity', dept: 'Electricity', language: 'en' },
 };
 
 export default function Login() {

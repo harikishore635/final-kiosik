@@ -167,14 +167,39 @@ const Receipt = () => {
     setTimeout(() => setEmailSent(false), 3000);
   };
 
-  const handleSendSMS = () => {
-    setSmsSent(true);
-    setTimeout(() => setSmsSent(false), 3000);
+  const sendNotification = async (method) => {
+    const mobile = receiptData?.mobile || sessionStorage.getItem('userMobile');
+    if (!mobile) return false;
+    try {
+      const resp = await fetch('/api/notifications/send-receipt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mobile,
+          method,
+          documentType: receiptData?.serviceCategory || receiptData?.serviceType || 'Request',
+          documentId: receiptData?.requestId,
+          citizenName: receiptData?.citizenName || sessionStorage.getItem('userName'),
+          language: i18n.language || 'en',
+        }),
+      });
+      const data = await resp.json();
+      return data.success;
+    } catch {
+      return false;
+    }
   };
 
-  const handleSendWhatsApp = () => {
+  const handleSendSMS = async () => {
+    setSmsSent(true);
+    await sendNotification('sms');
+    setTimeout(() => setSmsSent(false), 4000);
+  };
+
+  const handleSendWhatsApp = async () => {
     setWhatsappSent(true);
-    setTimeout(() => setWhatsappSent(false), 3000);
+    await sendNotification('whatsapp');
+    setTimeout(() => setWhatsappSent(false), 4000);
   };
 
   return (

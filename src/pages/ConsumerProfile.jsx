@@ -55,7 +55,7 @@ const ConsumerProfile = () => {
   useEffect(() => {
     const uid = sessionStorage.getItem('aadhaarUid') || 'demo';
     fetch(`/api/citizen/audit-trail/${uid}`)
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(data => {
         if (data.success && data.entries) {
           setAuditTrail(data.entries.map(e => ({
