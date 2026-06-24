@@ -48,7 +48,7 @@
       "sd": "سنڌي",
       "te": "తెలుగు",
       "ur": "اردو",
-      "selectionTitle": "???? ???? ?????"
+      "selectionTitle": "अपनी भाषा चुनें"
     },
     "landing": {
       "guest": "अतिथि",
@@ -374,7 +374,8 @@
       "slaBreached": "SLA का उल्लंघन — यह अनुरोध समय सीमा से अधिक है। एस्केलेशन शुरू किया जा सकता है।",
       "slaDeadline_one": "SLA समय सीमा: {{count}} कार्य दिवस शेष",
       "slaDeadline_other": "SLA समय सीमा: {{count}} कार्य दिवस शेष",
-      "ticketId": "टिकट आईडी"
+      "ticketId": "टिकट आईडी",
+      "assigned": "नियुक्त किया गया"
     },
     "receipt": {
       "title": "अनुरोध रसीद",
