@@ -70,7 +70,7 @@ export default function Landing() {
       <div className="vk-strip" />
       <div className="vk-top">
         <div className="vk-brand">
-          <div className="mk"><Logo size={36} /></div>
+          <div className="mk"><Logo size={84} /></div>
           <div>
             <div className="nm">SUVIDHA</div>
             <div className="sub">{t('app.brandSubtitle')}</div>
@@ -139,14 +139,14 @@ export default function Landing() {
             <div style={{ flex: 1 }}>
               <div style={{
                 fontWeight: 800,
-                fontSize: 36,
+                fontSize: 50,
                 color: 'var(--indigo-900)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 14,
               }}>
                 {t('landing.citizenLogin', 'Citizen Login')}{' '}
-                <span className="badge b-ok" style={{ fontSize: 11 }}>AADHAAR</span>
+                <span className="badge b-ok" style={{ fontSize: 18 }}>AADHAAR</span>
               </div>
               <div className="body" style={{ marginTop: 8 }}>
                 {t('landing.citizenDesc', 'Full access · Personal dashboard · Schemes')}
@@ -178,7 +178,7 @@ export default function Landing() {
               <I d={ic.user} size={48} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: 36, color: 'var(--indigo-900)' }}>
+              <div style={{ fontWeight: 700, fontSize: 50, color: 'var(--indigo-900)' }}>
                 {t('landing.guest', 'Continue as Guest')}
               </div>
               <div className="body" style={{ marginTop: 8 }}>
@@ -200,7 +200,8 @@ export default function Landing() {
               borderRadius: 18,
               border: '2px dashed var(--indigo-300)',
               background: 'color-mix(in oklab, var(--indigo-700) 5%, white)',
-              fontSize: 22,
+              fontSize: 32,
+              minHeight: 110,
               gap: 16,
               justifyContent: 'center',
             }}
@@ -278,7 +279,7 @@ export default function Landing() {
             setFontSize(next);
           }}
         >
-          <I d={ic.type} size={22} /> {t('vk.largerText')}
+          <I d={ic.type} size={22} /> {t('vk.largerText').replace(/^A\+\s*/, '')}
         </button>
         <button
           type="button"

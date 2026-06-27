@@ -183,7 +183,7 @@ const ConsumerProfile = () => {
 
   return (
     <VK bg="var(--surface-1)">
-      <div style={{ maxWidth: 800, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
         {/* Title */}
         <div className="text-center mb-8">
           <div className={`inline-flex items-center justify-center w-16 h-16 ${theme.btn} rounded-full mb-4`}>
@@ -200,10 +200,10 @@ const ConsumerProfile = () => {
         {/* Profile Card */}
         <div className="bg-white rounded-kiosk-lg shadow-kiosk p-6 md:p-8 mb-6">
           {/* Toggle Mask + Edit */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 gap-4">
             <button
               onClick={() => setShowMasked(!showMasked)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-800 transition-colors touch-manipulation"
+              className="flex items-center gap-2 text-kiosk-sm font-semibold text-gray-600 hover:text-gray-800 transition-colors touch-manipulation flex-shrink-0"
             >
               {showMasked ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               {showMasked ? 'Show Details' : 'Hide Details'}
@@ -219,95 +219,77 @@ const ConsumerProfile = () => {
             )}
           </div>
 
-          <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Name */}
-            <div className={`flex items-center gap-4 p-4 rounded-xl ${isEditing ? 'bg-gray-50' : ''}`}>
-              
-              <div className="flex-1">
-                <p className="text-sm text-gray-500">{t('form.name')}</p>
-                {isEditing ? (
-                  <input className="w-full text-kiosk-base font-semibold text-gray-800 bg-white border rounded-lg px-3 py-2 mt-1" value={editData.name} onChange={(e) => handleEditChange('name', e.target.value)} />
-                ) : (
-                  <p className="text-kiosk-base font-semibold text-gray-800">{profileData.name}</p>
-                )}
-              </div>
+            <div className={`p-4 rounded-xl ${isEditing ? 'bg-gray-50' : ''}`}>
+              <p className="text-kiosk-sm text-gray-500">{t('form.name')}</p>
+              {isEditing ? (
+                <input className="w-full text-kiosk-base font-semibold text-gray-800 bg-white border rounded-lg px-3 py-2 mt-1" value={editData.name} onChange={(e) => handleEditChange('name', e.target.value)} />
+              ) : (
+                <p className="text-kiosk-base font-semibold text-gray-800">{profileData.name}</p>
+              )}
             </div>
 
             {/* Mobile */}
-            <div className={`flex items-center gap-4 p-4 rounded-xl ${isEditing ? 'bg-gray-50' : ''}`}>
-              
-              <div className="flex-1">
-                <p className="text-sm text-gray-500">{t('form.mobile')}</p>
-                {isEditing ? (
-                  <div>
-                    <input className="w-full text-kiosk-base font-semibold text-gray-800 bg-white border rounded-lg px-3 py-2 mt-1" value={editData.mobile} onChange={(e) => handleEditChange('mobile', e.target.value.replace(/\D/g, '').slice(0, 10))} />
-                    {mobileChanged && !otpVerified && (
-                      <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                        <p className="text-sm text-blue-700 mb-2">{t('profile.otpRequiredForMobile')}</p>
-                        {!otpSent ? (
-                          <Button size="small" onClick={handleSendOTP}>{t('auth.sendOTP')}</Button>
-                        ) : (
-                          <div className="flex gap-2">
-                            <input className="flex-1 border rounded-lg px-3 py-2 text-sm" placeholder={t('profile.enterOtp')} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} />
-                            <Button size="small" onClick={handleVerifyOTP}>{t('profile.verify')}</Button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {otpVerified && (
-                      <p className="mt-2 text-sm text-green-600 flex items-center gap-1">
-                        <CheckCircle className="w-4 h-4" /> OTP Verified
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-kiosk-base font-semibold text-gray-800">{maskValue(profileData.mobile, 'mobile')}</p>
-                )}
-              </div>
+            <div className={`p-4 rounded-xl ${isEditing ? 'bg-gray-50' : ''}`}>
+              <p className="text-kiosk-sm text-gray-500">{t('form.mobile')}</p>
+              {isEditing ? (
+                <div>
+                  <input className="w-full text-kiosk-base font-semibold text-gray-800 bg-white border rounded-lg px-3 py-2 mt-1" value={editData.mobile} onChange={(e) => handleEditChange('mobile', e.target.value.replace(/\D/g, '').slice(0, 10))} />
+                  {mobileChanged && !otpVerified && (
+                    <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-kiosk-sm text-blue-700 mb-2">{t('profile.otpRequiredForMobile')}</p>
+                      {!otpSent ? (
+                        <Button size="small" onClick={handleSendOTP}>{t('auth.sendOTP')}</Button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <input className="flex-1 border rounded-lg px-3 py-2 text-kiosk-sm" placeholder={t('profile.enterOtp')} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                          <Button size="small" onClick={handleVerifyOTP}>{t('profile.verify')}</Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {otpVerified && (
+                    <p className="mt-2 text-kiosk-sm text-green-600 flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4" /> OTP Verified
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-kiosk-base font-semibold text-gray-800">{maskValue(profileData.mobile, 'mobile')}</p>
+              )}
             </div>
 
             {/* Email */}
-            <div className={`flex items-center gap-4 p-4 rounded-xl ${isEditing ? 'bg-gray-50' : ''}`}>
-              
-              <div className="flex-1">
-                <p className="text-sm text-gray-500">{t('form.email')}</p>
-                {isEditing ? (
-                  <input className="w-full text-kiosk-base font-semibold text-gray-800 bg-white border rounded-lg px-3 py-2 mt-1" value={editData.email} onChange={(e) => handleEditChange('email', e.target.value)} />
-                ) : (
-                  <p className="text-kiosk-base font-semibold text-gray-800">{maskValue(profileData.email, 'email')}</p>
-                )}
-              </div>
+            <div className={`p-4 rounded-xl ${isEditing ? 'bg-gray-50' : ''}`}>
+              <p className="text-kiosk-sm text-gray-500">{t('form.email')}</p>
+              {isEditing ? (
+                <input className="w-full text-kiosk-base font-semibold text-gray-800 bg-white border rounded-lg px-3 py-2 mt-1" value={editData.email} onChange={(e) => handleEditChange('email', e.target.value)} />
+              ) : (
+                <p className="text-kiosk-base font-semibold text-gray-800">{maskValue(profileData.email, 'email')}</p>
+              )}
             </div>
 
             {/* Address */}
-            <div className={`flex items-center gap-4 p-4 rounded-xl ${isEditing ? 'bg-gray-50' : ''}`}>
-              
-              <div className="flex-1">
-                <p className="text-sm text-gray-500">{t('form.address')}</p>
-                {isEditing ? (
-                  <input className="w-full text-kiosk-base font-semibold text-gray-800 bg-white border rounded-lg px-3 py-2 mt-1" value={editData.address} onChange={(e) => handleEditChange('address', e.target.value)} />
-                ) : (
-                  <p className="text-kiosk-base font-semibold text-gray-800">{profileData.address}</p>
-                )}
-              </div>
+            <div className={`p-4 rounded-xl ${isEditing ? 'bg-gray-50' : ''}`}>
+              <p className="text-kiosk-sm text-gray-500">{t('form.address')}</p>
+              {isEditing ? (
+                <input className="w-full text-kiosk-base font-semibold text-gray-800 bg-white border rounded-lg px-3 py-2 mt-1" value={editData.address} onChange={(e) => handleEditChange('address', e.target.value)} />
+              ) : (
+                <p className="text-kiosk-base font-semibold text-gray-800">{profileData.address}</p>
+              )}
             </div>
 
             {/* Read-only: Aadhaar */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50">
-              
-              <div className="flex-1">
-                <p className="text-sm text-gray-500">Aadhaar (Read Only)</p>
-                <p className="text-kiosk-base font-semibold text-gray-800">{maskValue(profileData.aadhaar, 'aadhaar')}</p>
-              </div>
+            <div className="p-4 rounded-xl bg-gray-50">
+              <p className="text-kiosk-sm text-gray-500">Aadhaar (Read Only)</p>
+              <p className="text-kiosk-base font-semibold text-gray-800">{maskValue(profileData.aadhaar, 'aadhaar')}</p>
             </div>
 
             {/* Read-only: Consumer Number */}
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-gray-50">
-              
-              <div className="flex-1">
-                <p className="text-sm text-gray-500">Consumer Number (Read Only)</p>
-                <p className="text-kiosk-base font-semibold text-gray-800">{profileData.consumerNumber}</p>
-              </div>
+            <div className="p-4 rounded-xl bg-gray-50">
+              <p className="text-kiosk-sm text-gray-500">Consumer Number (Read Only)</p>
+              <p className="text-kiosk-base font-semibold text-gray-800">{profileData.consumerNumber}</p>
             </div>
           </div>
 
@@ -328,24 +310,24 @@ const ConsumerProfile = () => {
                 {t('profile.ownershipTransferDesc')}
               </p>
               <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-kiosk">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="text-xs text-gray-500">{t('profile.newOwnerName')}</label>
+                    <label className="text-kiosk-sm text-gray-500">{t('profile.newOwnerName')}</label>
                     <input
-                      className="w-full text-sm bg-white border rounded-lg px-3 py-2 mt-1"
+                      className="w-full text-kiosk-base bg-white border rounded-lg px-3 py-2 mt-1"
                       placeholder={t('profile.enterNewOwnerName')}
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-gray-500">{t('profile.newOwnerAadhaar')}</label>
+                    <label className="text-kiosk-sm text-gray-500">{t('profile.newOwnerAadhaar')}</label>
                     <input
-                      className="w-full text-sm bg-white border rounded-lg px-3 py-2 mt-1"
+                      className="w-full text-kiosk-base bg-white border rounded-lg px-3 py-2 mt-1"
                       placeholder={t('profile.enterAadhaarNumber')}
                       maxLength={12}
                     />
                   </div>
                 </div>
-                <p className="text-xs text-yellow-700 mb-3">
+                <p className="text-kiosk-sm text-yellow-700 mb-3">
                   {t('profile.ownershipTransferWarning')}
                 </p>
                 <Button

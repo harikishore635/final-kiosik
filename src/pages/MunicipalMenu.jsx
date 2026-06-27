@@ -61,7 +61,7 @@ const MunicipalMenu = () => {
           <div className="label-tag" style={{ color: 'var(--dept-water)', marginBottom: 14 }}>
             Guwahati Municipal
           </div>
-          <h1 className="h2">{t('home.municipalDept', 'Municipal')}</h1>
+          <h1 className="h1">{t('home.municipalDept', 'Municipal')}</h1>
           <p className="body-l" style={{ marginTop: 14, color: 'var(--ink-500)' }}>
             {t('home.municipalDeptDesc', 'Water connections · Grievances · Property tax')}
           </p>
@@ -97,7 +97,7 @@ const MunicipalMenu = () => {
       <button
         type="button"
         className="btn btn-quiet"
-        style={{ alignSelf: 'center', fontSize: 22, padding: '18px 48px' }}
+        style={{ alignSelf: 'center' }}
         onClick={() => navigate('/home')}
       >
         <I d={ic.back} size={24} /> {t('home.backToOrgs', 'Back to Organizations')}

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { Smartphone, Send, CheckCircle, MessageSquare } from 'lucide-react';
+import { Smartphone, CheckCircle } from 'lucide-react';
 import { validateMobile } from '../utils/helpers';
 import { notificationAPI } from '../utils/apiService';
 
 /**
  * Send to Phone — allows sending receipt/invoice/document to user's mobile.
- * Options: SMS link, WhatsApp link.
+ * Options: SMS, WhatsApp. Grouped with the mobile field as one action.
  * In production: calls SMS gateway API. Demo simulates success.
  */
 const SendToPhone = ({ documentType = 'Receipt', documentId = '', className = '' }) => {
   const [mobile, setMobile] = useState(() => sessionStorage.getItem('userMobile') || '');
-  const [sending, setSending] = useState(false);
+  const [sendingMethod, setSendingMethod] = useState(null);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
 
@@ -51,35 +51,42 @@ const SendToPhone = ({ documentType = 'Receipt', documentId = '', className = ''
       setError(l.invalidMobile);
       return;
     }
-    setSending(true);
+    setSendingMethod(method);
     try {
       await notificationAPI.sendReceipt({ mobile, method, documentType, documentId });
     } catch {
       // Fallback: still show success in demo mode
     }
-    setSending(false);
+    setSendingMethod(null);
     setSent(true);
-    // Reset after 5s
     setTimeout(() => setSent(false), 5000);
   };
 
   if (sent) {
     return (
-      <div className={`bg-green-50 border border-green-200 rounded-xl p-4 flex items-center space-x-3 ${className}`}>
-        <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0" />
-        <span className="text-sm font-medium text-green-700">{l.success}</span>
+      <div
+        className={className}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 16,
+          background: 'color-mix(in oklab, var(--ok) 12%, white)',
+          border: '1.5px solid var(--ok)', borderRadius: 'calc(28px * var(--ui-scale))',
+          padding: 'calc(34px * var(--ui-scale)) calc(42px * var(--ui-scale))',
+        }}
+      >
+        <CheckCircle style={{ width: 'calc(40px * var(--ui-scale))', height: 'calc(40px * var(--ui-scale))', color: 'var(--ok)', flexShrink: 0 }} />
+        <span className="body" style={{ color: 'var(--ok)', fontWeight: 600 }}>{l.success}</span>
       </div>
     );
   }
 
   return (
-    <div className={`bg-gray-50 border border-gray-200 rounded-xl p-4 ${className}`}>
-      <div className="flex items-center space-x-2 mb-3">
-        <Smartphone className="w-5 h-5 text-government-blue" />
-        <span className="text-sm font-semibold text-gray-700">{l.title}</span>
+    <div className={`card ${className}`} style={{ padding: 'calc(40px * var(--ui-scale))' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'calc(16px * var(--ui-scale))', marginBottom: 'calc(28px * var(--ui-scale))' }}>
+        <Smartphone style={{ width: 'calc(36px * var(--ui-scale))', height: 'calc(36px * var(--ui-scale))', color: 'var(--indigo-700)' }} />
+        <span className="body" style={{ fontWeight: 700, color: 'var(--ink-900)' }}>{l.title}</span>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'calc(24px * var(--ui-scale))' }}>
         <input
           type="tel"
           value={mobile}
@@ -88,34 +95,30 @@ const SendToPhone = ({ documentType = 'Receipt', documentId = '', className = ''
             setError('');
           }}
           placeholder={l.placeholder}
-          className="flex-1 px-4 py-3 border border-gray-300 rounded-xl text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+          className="field"
           maxLength={10}
         />
-        <div className="flex gap-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'calc(24px * var(--ui-scale))' }}>
           <button
+            type="button"
+            className="btn btn-pri"
             onClick={() => handleSend('sms')}
-            disabled={sending || mobile.length !== 10}
-            className="flex items-center space-x-1 px-4 py-3 bg-government-blue text-white rounded-xl text-sm font-medium hover:bg-blue-800 disabled:opacity-50 transition-colors whitespace-nowrap"
+            disabled={sendingMethod !== null || mobile.length !== 10}
           >
-            {sending ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <Send className="w-4 h-4" />
-            )}
-            <span>{l.sendSMS}</span>
+            {sendingMethod === 'sms' ? '…' : l.sendSMS}
           </button>
           <button
+            type="button"
+            className="btn btn-acc"
             onClick={() => handleSend('whatsapp')}
-            disabled={sending || mobile.length !== 10}
-            className="flex items-center space-x-1 px-4 py-3 bg-green-600 text-white rounded-xl text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors whitespace-nowrap"
+            disabled={sendingMethod !== null || mobile.length !== 10}
           >
-            <MessageSquare className="w-4 h-4" />
-            <span>{l.sendWhatsApp}</span>
+            {sendingMethod === 'whatsapp' ? '…' : l.sendWhatsApp}
           </button>
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+      {error && <p className="meta" style={{ color: 'var(--err)', marginTop: 'calc(16px * var(--ui-scale))' }}>{error}</p>}
     </div>
   );
 };

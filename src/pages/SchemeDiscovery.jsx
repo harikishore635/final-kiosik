@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen } from '../components/loading';
 import { states } from '../utils/constants';
@@ -608,7 +608,7 @@ const SchemeDiscovery = () => {
           <button
             type="button"
             className="btn btn-quiet"
-            style={{ alignSelf: 'center', fontSize: 22, padding: '18px 48px' }}
+            style={{ alignSelf: 'center' }}
             onClick={() => navigate('/home')}
           >
             <I d={ic.back} size={24} /> {t('home.backToOrgs', 'Back to Organizations')}
@@ -635,43 +635,57 @@ const SchemeDiscovery = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '36px 40px' }}>
               <div>
                 <label className="flab">{t('schemes.ageGroup', 'Age Group')}</label>
-                <select className="field" value={profile.ageGroup} onChange={(e) => handleProfileChange('ageGroup', e.target.value)}>
-                  {ageGroups.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                <Select
+                  value={profile.ageGroup}
+                  onChange={(e) => handleProfileChange('ageGroup', e.target.value)}
+                  options={ageGroups}
+                />
               </div>
               <div>
                 <label className="flab">{t('schemes.gender', 'Gender')}</label>
-                <select className="field" value={profile.gender} onChange={(e) => handleProfileChange('gender', e.target.value)}>
-                  <option value="">{t('schemes.selectGender', 'Select Gender')}</option>
-                  <option value="male">{t('schemes.male', 'Male')}</option>
-                  <option value="female">{t('schemes.female', 'Female')}</option>
-                  <option value="other">{t('schemes.otherGender', 'Other')}</option>
-                </select>
+                <Select
+                  value={profile.gender}
+                  onChange={(e) => handleProfileChange('gender', e.target.value)}
+                  placeholder={t('schemes.selectGender', 'Select Gender')}
+                  options={[
+                    { value: 'male', label: t('schemes.male', 'Male') },
+                    { value: 'female', label: t('schemes.female', 'Female') },
+                    { value: 'other', label: t('schemes.otherGender', 'Other') },
+                  ]}
+                />
               </div>
               <div>
                 <label className="flab">{t('form.state', 'State')}</label>
-                <select className="field" value={profile.state} onChange={(e) => handleProfileChange('state', e.target.value)}>
-                  <option value="">{t('form.selectState', 'Select State')}</option>
-                  {states.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+                <Select
+                  value={profile.state}
+                  onChange={(e) => handleProfileChange('state', e.target.value)}
+                  placeholder={t('form.selectState', 'Select State')}
+                  options={states.map(s => ({ value: s.id, label: s.name }))}
+                />
               </div>
               <div>
                 <label className="flab">{t('schemes.income', 'Annual Income')}</label>
-                <select className="field" value={profile.income} onChange={(e) => handleProfileChange('income', e.target.value)}>
-                  {incomeRanges.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                <Select
+                  value={profile.income}
+                  onChange={(e) => handleProfileChange('income', e.target.value)}
+                  options={incomeRanges}
+                />
               </div>
               <div>
                 <label className="flab">{t('schemes.category', 'Category')}</label>
-                <select className="field" value={profile.category} onChange={(e) => handleProfileChange('category', e.target.value)}>
-                  {categoryOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                <Select
+                  value={profile.category}
+                  onChange={(e) => handleProfileChange('category', e.target.value)}
+                  options={categoryOptions}
+                />
               </div>
               <div>
                 <label className="flab">{t('schemes.occupation', 'Occupation')}</label>
-                <select className="field" value={profile.occupation} onChange={(e) => handleProfileChange('occupation', e.target.value)}>
-                  {occupations.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                <Select
+                  value={profile.occupation}
+                  onChange={(e) => handleProfileChange('occupation', e.target.value)}
+                  options={occupations}
+                />
               </div>
             </div>
 
@@ -680,8 +694,8 @@ const SchemeDiscovery = () => {
             </button>
 
             <div style={{ textAlign: 'center', marginTop: 20 }}>
-              <button type="button" className="btn btn-quiet" style={{ fontSize: 20 }} onClick={() => setStep('menu')}>
-                <I d={ic.back} size={20} /> {t('app.back', 'Back')}
+              <button type="button" className="btn btn-quiet" onClick={() => setStep('menu')}>
+                <I d={ic.back} size={24} /> {t('app.back', 'Back')}
               </button>
             </div>
           </div>
@@ -784,18 +798,14 @@ const SchemeDiscovery = () => {
                 {hasMoreGoodMatches ? (
                   <button
                     type="button"
-                    className="btn btn-ghost"
-                    style={{ fontSize: 22, padding: '18px 48px' }}
-                    onClick={() => setVisibleCount(c => c + 10)}
+                    className="btn btn-ghost"                    onClick={() => setVisibleCount(c => c + 10)}
                   >
                     {t('schemes.showMore', 'Show More')} <I d={ic.arrow} size={24} />
                   </button>
                 ) : (
                   <button
                     type="button"
-                    className="btn btn-quiet"
-                    style={{ fontSize: 22, padding: '18px 48px' }}
-                    onClick={() => navigate('/home')}
+                    className="btn btn-quiet"                    onClick={() => navigate('/home')}
                   >
                     <I d={ic.back} size={24} /> {t('home.backToOrgs', 'Back to Organizations')}
                   </button>
@@ -825,7 +835,7 @@ const SchemeDiscovery = () => {
             style={{
               position: 'relative',
               background: 'white', borderRadius: 24,
-              width: '100%', maxWidth: 760, maxHeight: '85vh',
+              width: '100%', maxWidth: 1120, maxHeight: '90vh',
               display: 'flex', flexDirection: 'column',
               boxShadow: '0 24px 64px rgba(0,0,0,0.3)',
               overflow: 'hidden',
@@ -846,7 +856,7 @@ const SchemeDiscovery = () => {
             </button>
 
             {/* Scrollable body — header scrolls with content so it never fights the close button for space */}
-            <div style={{ padding: '36px 80px 28px 36px', overflowY: 'auto', flex: 1 }}>
+            <div style={{ padding: '44px 96px 40px 48px', overflowY: 'auto', flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
                 <span className={`badge ${detailScheme.match >= 90 ? 'b-ok' : detailScheme.match >= 75 ? 'b-warn' : 'b-info'}`}>
                   {detailScheme.match}% {t('schemes.matchLabel', 'match')}
@@ -859,17 +869,17 @@ const SchemeDiscovery = () => {
                 )}
               </div>
 
-              <div className="nm" style={{ fontSize: 28, lineHeight: 1.3 }}>{getLocalName(detailScheme)}</div>
-              <div className="meta" style={{ marginTop: 6, marginBottom: 22 }}>{detailScheme.ministry}</div>
+              <div className="nm" style={{ fontSize: 40, lineHeight: 1.25 }}>{getLocalName(detailScheme)}</div>
+              <div className="meta" style={{ marginTop: 8, marginBottom: 24, fontSize: 22 }}>{detailScheme.ministry}</div>
 
-              <div className="sub" style={{ fontSize: 20 }}>{getLocalDesc(detailScheme)}</div>
+              <div className="sub" style={{ fontSize: 28, lineHeight: 1.5 }}>{getLocalDesc(detailScheme)}</div>
 
               <div style={{ marginTop: 26 }}>
                 <div className="meta" style={{ marginBottom: 12, fontWeight: 700 }}>{t('schemes.eligibilityCriteria', 'Eligibility')}:</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {detailScheme.eligibility.map((crit, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 18, color: 'var(--ink-700)' }}>
-                      <I d={ic.check} size={18} style={{ flexShrink: 0, marginTop: 2, color: 'var(--ok)' }} /> <span>{crit}</span>
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, fontSize: 23, color: 'var(--ink-700)' }}>
+                      <I d={ic.check} size={24} style={{ flexShrink: 0, marginTop: 2, color: 'var(--ok)' }} /> <span>{crit}</span>
                     </div>
                   ))}
                 </div>

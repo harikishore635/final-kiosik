@@ -98,13 +98,13 @@ body {
 
 /* ── Kiosk-scale typography helpers ───────────────────── */
 @layer utilities {
-  .text-kiosk-sm   { font-size: calc(32px * var(--ui-scale)); line-height: 1.4; }
-  .text-kiosk-base { font-size: calc(36px * var(--ui-scale)); line-height: 1.45; }
-  .text-kiosk-lg   { font-size: calc(40px * var(--ui-scale)); line-height: 1.4; }
-  .text-kiosk-xl   { font-size: calc(48px * var(--ui-scale)); line-height: 1.35; }
-  .text-kiosk-2xl  { font-size: calc(72px * var(--ui-scale)); line-height: 1.15; }
-  .text-kiosk-3xl  { font-size: calc(96px * var(--ui-scale)); line-height: 1.1; }
-  .text-kiosk-4xl  { font-size: calc(112px * var(--ui-scale)); line-height: 1.05; }
+  .text-kiosk-sm   { font-size: calc(18px * var(--ui-scale)); line-height: 1.4; }
+  .text-kiosk-base { font-size: calc(20px * var(--ui-scale)); line-height: 1.45; }
+  .text-kiosk-lg   { font-size: calc(24px * var(--ui-scale)); line-height: 1.4; }
+  .text-kiosk-xl   { font-size: calc(28px * var(--ui-scale)); line-height: 1.35; }
+  .text-kiosk-2xl  { font-size: calc(32px * var(--ui-scale)); line-height: 1.15; }
+  .text-kiosk-3xl  { font-size: calc(40px * var(--ui-scale)); line-height: 1.1; }
+  .text-kiosk-4xl  { font-size: calc(48px * var(--ui-scale)); line-height: 1.05; }
 }
 
 /* ── Kiosk card component ──────────────────────────────── */

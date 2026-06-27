@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 
 const FamilyProfile = () => {
@@ -196,7 +196,7 @@ const FamilyProfile = () => {
           <button
             type="button"
             className="btn btn-quiet"
-            style={{ alignSelf: 'center', fontSize: 22, padding: '18px 48px' }}
+            style={{ alignSelf: 'center' }}
             onClick={() => navigate('/home')}
           >
             <I d={ic.back} size={24} /> {t('home.backToOrgs', 'Back to Organizations')}
@@ -250,10 +250,14 @@ const FamilyProfile = () => {
                 </div>
                 <div>
                   <label className="flab">{t('familyProfile.relationship')} *</label>
-                  <select className="field" value={formData.relationship} onChange={(e) => handleFormChange('relationship', e.target.value)}>
-                    <option value="child">{t('familyProfile.child')}</option>
-                    <option value="elderly_parent">{t('familyProfile.elderlyParent')}</option>
-                  </select>
+                  <Select
+                    value={formData.relationship}
+                    onChange={(e) => handleFormChange('relationship', e.target.value)}
+                    options={[
+                      { value: 'child', label: t('familyProfile.child') },
+                      { value: 'elderly_parent', label: t('familyProfile.elderlyParent') },
+                    ]}
+                  />
                 </div>
                 <div>
                   <label className="flab">{t('familyProfile.age')} *</label>
@@ -261,11 +265,15 @@ const FamilyProfile = () => {
                 </div>
                 <div>
                   <label className="flab">{t('schemes.gender')}</label>
-                  <select className="field" value={formData.gender} onChange={(e) => handleFormChange('gender', e.target.value)}>
-                    <option value="Male">{t('familyProfile.male')}</option>
-                    <option value="Female">{t('familyProfile.female')}</option>
-                    <option value="Other">{t('familyProfile.other')}</option>
-                  </select>
+                  <Select
+                    value={formData.gender}
+                    onChange={(e) => handleFormChange('gender', e.target.value)}
+                    options={[
+                      { value: 'Male', label: t('familyProfile.male') },
+                      { value: 'Female', label: t('familyProfile.female') },
+                      { value: 'Other', label: t('familyProfile.other') },
+                    ]}
+                  />
                 </div>
                 <div>
                   <label className="flab">{t('familyProfile.aadhaarOptional')}</label>
@@ -273,13 +281,17 @@ const FamilyProfile = () => {
                 </div>
                 <div>
                   <label className="flab">{t('familyProfile.disabilityOptional')}</label>
-                  <select className="field" value={formData.disability} onChange={(e) => handleFormChange('disability', e.target.value)}>
-                    <option value="">{t('familyProfile.none')}</option>
-                    <option value="visual">{t('familyProfile.visual')}</option>
-                    <option value="physical">{t('familyProfile.physical')}</option>
-                    <option value="hearing">{t('familyProfile.hearing')}</option>
-                    <option value="intellectual">{t('familyProfile.intellectual')}</option>
-                  </select>
+                  <Select
+                    value={formData.disability}
+                    onChange={(e) => handleFormChange('disability', e.target.value)}
+                    options={[
+                      { value: '', label: t('familyProfile.none') },
+                      { value: 'visual', label: t('familyProfile.visual') },
+                      { value: 'physical', label: t('familyProfile.physical') },
+                      { value: 'hearing', label: t('familyProfile.hearing') },
+                      { value: 'intellectual', label: t('familyProfile.intellectual') },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -290,10 +302,12 @@ const FamilyProfile = () => {
               )}
 
               <div style={{ display: 'flex', gap: 28, marginTop: 40 }}>
+                <button className="btn btn-ghost btn-xl" style={{ flex: 1 }} onClick={resetForm}>
+                  <I d={ic.x} size={40} /> {t('app.cancel')}
+                </button>
                 <button className="btn btn-pri btn-xl" style={{ flex: 1 }} onClick={handleSave}>
                   <I d={ic.check} size={44} /> {editingId ? t('familyProfile.updateDependent') : t('familyProfile.saveDependent')}
                 </button>
-                <button className="btn btn-ghost" onClick={resetForm}>{t('app.cancel')}</button>
               </div>
             </div>
           )}
@@ -367,7 +381,6 @@ const FamilyProfile = () => {
             <button
               type="button"
               className="btn btn-quiet"
-              style={{ fontSize: 22, padding: '18px 48px' }}
               onClick={() => setView('menu')}
             >
               <I d={ic.back} size={24} /> {t('familyProfile.backToMenu')}

@@ -58,10 +58,7 @@ const ElectricityMenu = () => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 40, marginBottom: 48 }}>
         <DD color="var(--dept-elec)" glyph={ic.bolt} size={168} isz={92} />
         <div>
-          <div className="label-tag" style={{ color: 'var(--dept-elec)', marginBottom: 14 }}>
-            APDCL · Electricity
-          </div>
-          <h1 className="h2">{t('home.electricityDept', 'Electricity')}</h1>
+          <h1 className="h1">{t('home.electricityDept', 'Electricity')}</h1>
           <p className="body-l" style={{ marginTop: 14, color: 'var(--ink-500)' }}>
             {t('home.electricityDeptDesc', 'New connections · Meter services · Complaints · Billing')}
           </p>
@@ -97,7 +94,7 @@ const ElectricityMenu = () => {
       <button
         type="button"
         className="btn btn-quiet"
-        style={{ alignSelf: 'center', fontSize: 22, padding: '18px 48px' }}
+        style={{ alignSelf: 'center', marginTop: 24 }}
         onClick={() => navigate('/home')}
       >
         <I d={ic.back} size={24} /> {t('home.backToOrgs', 'Back to Organizations')}

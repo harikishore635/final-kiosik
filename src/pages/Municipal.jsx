@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
@@ -295,24 +295,33 @@ const Municipal = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
                   <div>
                     <label className="flab">{t('municipal.connectionType')} *</label>
-                    <select className="field" value={formData.waterConnectionType || ''} onChange={e => handleInputChange('waterConnectionType', e.target.value)} required>
-                      <option value="">{t('municipal.selectConnectionType')}</option>
-                      <option value="domestic">Domestic (Household)</option>
-                      <option value="commercial">Commercial</option>
-                      <option value="industrial">Industrial</option>
-                      <option value="institutional">Institutional/Govt</option>
-                      <option value="upgrade">Upgrade Existing</option>
-                    </select>
+                    <Select
+                      value={formData.waterConnectionType || ''}
+                      onChange={e => handleInputChange('waterConnectionType', e.target.value)}
+                      placeholder={t('municipal.selectConnectionType')}
+                      options={[
+                        { value: 'domestic', label: 'Domestic (Household)' },
+                        { value: 'commercial', label: 'Commercial' },
+                        { value: 'industrial', label: 'Industrial' },
+                        { value: 'institutional', label: 'Institutional/Govt' },
+                        { value: 'upgrade', label: 'Upgrade Existing' },
+                      ]}
+                      required
+                    />
                   </div>
                   <div>
                     <label className="flab">{t('municipal.pipeSize')}</label>
-                    <select className="field" value={formData.pipeSize || ''} onChange={e => handleInputChange('pipeSize', e.target.value)}>
-                      <option value="">{t('municipal.selectPipeSize')}</option>
-                      <option value="0.5inch">½ inch (Standard domestic)</option>
-                      <option value="1inch">1 inch (Small commercial)</option>
-                      <option value="2inch">2 inch (Large commercial)</option>
-                      <option value="3inch">3 inch+ (Industrial)</option>
-                    </select>
+                    <Select
+                      value={formData.pipeSize || ''}
+                      onChange={e => handleInputChange('pipeSize', e.target.value)}
+                      placeholder={t('municipal.selectPipeSize')}
+                      options={[
+                        { value: '0.5inch', label: '½ inch (Standard domestic)' },
+                        { value: '1inch', label: '1 inch (Small commercial)' },
+                        { value: '2inch', label: '2 inch (Large commercial)' },
+                        { value: '3inch', label: '3 inch+ (Industrial)' },
+                      ]}
+                    />
                   </div>
                   <div>
                     <label className="flab">{t('municipal.plotArea')}</label>
@@ -353,26 +362,37 @@ const Municipal = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 40, marginTop: 36 }}>
               <div>
                 <label className="flab">{t('form.state')} *</label>
-                <select className="field" value={formData.state} onChange={(e) => handleInputChange('state', e.target.value)} required>
-                  <option value="">{t('form.selectState')}</option>
-                  {states.map(s => <option key={s.id} value={s.id}>{getLocalizedName(s)}</option>)}
-                </select>
+                <Select
+                  value={formData.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  placeholder={t('form.selectState')}
+                  options={states.map(s => ({ value: s.id, label: getLocalizedName(s) }))}
+                  required
+                />
                 {errors.state && <div className="meta" style={{ color: 'var(--err)' }}>{errors.state}</div>}
               </div>
               <div>
                 <label className="flab">{t('form.city')} *</label>
-                <select className="field" value={formData.city} onChange={(e) => handleInputChange('city', e.target.value)} disabled={!formData.state} required>
-                  <option value="">{t('form.selectCity')}</option>
-                  {availableCities.map(c => <option key={c.id} value={c.id}>{getLocalizedName(c)}</option>)}
-                </select>
+                <Select
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder={t('form.selectCity')}
+                  options={availableCities.map(c => ({ value: c.id, label: getLocalizedName(c) }))}
+                  disabled={!formData.state}
+                  required
+                />
                 {errors.city && <div className="meta" style={{ color: 'var(--err)' }}>{errors.city}</div>}
               </div>
               <div>
                 <label className="flab">{t('form.ward')} *</label>
-                <select className="field" value={formData.ward} onChange={(e) => handleInputChange('ward', e.target.value)} disabled={!formData.city} required>
-                  <option value="">{t('form.selectWard')}</option>
-                  {availableWards.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                </select>
+                <Select
+                  value={formData.ward}
+                  onChange={(e) => handleInputChange('ward', e.target.value)}
+                  placeholder={t('form.selectWard')}
+                  options={availableWards.map(w => ({ value: w.id, label: w.name }))}
+                  disabled={!formData.city}
+                  required
+                />
                 {errors.ward && <div className="meta" style={{ color: 'var(--err)' }}>{errors.ward}</div>}
               </div>
             </div>

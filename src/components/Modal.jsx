@@ -128,7 +128,8 @@ const Modal = ({
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
         aria-describedby={message ? 'modal-desc' : undefined}
-        className="bg-white rounded-kiosk-lg shadow-2xl max-w-lg w-full animate-slide-up overflow-hidden"
+        className="bg-white rounded-kiosk-lg shadow-2xl w-full animate-slide-up overflow-hidden"
+        style={{ maxWidth: 'calc(820px * var(--ui-scale))', maxHeight: '88vh', overflowY: 'auto' }}
       >
         {/* Header */}
         <div className="relative p-6 pb-0">

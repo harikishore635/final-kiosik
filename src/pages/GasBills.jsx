@@ -104,9 +104,6 @@ const GasBills = () => {
                   </div>
                   <div style={{ display: 'flex', gap: 16 }}>
                     <button className="btn btn-ghost" onClick={() => window.print()}>
-                      <I d={ic.download} size={32} /> Download
-                    </button>
-                    <button className="btn btn-ghost" onClick={() => window.print()}>
                       <I d={ic.print} size={32} /> Print
                     </button>
                   </div>
@@ -118,7 +115,7 @@ const GasBills = () => {
 
         {/* Back Button */}
         <div style={{ marginTop: 40, textAlign: 'center' }}>
-          <button className="btn btn-quiet" style={{ fontSize: 22, padding: '18px 48px' }} onClick={() => navigate('/home')}>
+          <button className="btn btn-quiet" onClick={() => navigate('/home')}>
             <I d={ic.back} size={24} /> {t('home.backToOrgs', 'Back to Home')}
           </button>
         </div>

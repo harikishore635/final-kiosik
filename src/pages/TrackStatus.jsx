@@ -8,6 +8,7 @@ import { mockTrackingData } from '../utils/constants';
 import { formatDate } from '../utils/helpers';
 import { trackAPI } from '../utils/apiService';
 import { mockDelayRange } from '../utils/mockDelay';
+import { useToast } from '../hooks/useToast';
 
 // Parse SLA string like "15 working days" → number of working days
 function parseSLADays(slaStr) {
@@ -37,6 +38,7 @@ function calcSLACountdown(submittedAt, slaDays) {
 const TrackStatus = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [searchType, setSearchType] = useState('requestId'); // 'requestId' | 'ticketId' | 'mobile'
@@ -55,6 +57,16 @@ const TrackStatus = () => {
     update();
     const interval = setInterval(update, 60 * 1000);
     return () => clearInterval(interval);
+  }, [result]);
+
+  // Escalated state persists across navigation/refresh, keyed by request ID
+  useEffect(() => {
+    if (!result?.requestId) { setEscalated(false); return; }
+    try {
+      setEscalated(localStorage.getItem(`suvidha:escalated:${result.requestId}`) === 'true');
+    } catch {
+      setEscalated(false);
+    }
   }, [result]);
 
   const handleSearch = async () => {
@@ -217,9 +229,6 @@ const TrackStatus = () => {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                   {getStatusBadge(result.status)}
-                  <button aria-label={t('tracking.downloadPdf')} className="btn btn-ghost" style={{ color: 'var(--cream)' }} onClick={() => window.print()}>
-                    <I d={ic.download} size={32} />
-                  </button>
                   <button aria-label={t('tracking.printStatus')} className="btn btn-ghost" style={{ color: 'var(--cream)' }} onClick={() => window.print()}>
                     <I d={ic.print} size={32} />
                   </button>
@@ -242,7 +251,11 @@ const TrackStatus = () => {
                     <div className="meta" style={{ marginTop: 4 }}>{t('tracking.committedSla')}: {result.sla}</div>
                   </div>
                   {slaCountdown.overdue && !escalated && (
-                    <button className="btn btn-err" style={{ marginLeft: 'auto' }} onClick={() => { setEscalated(true); alert(t('tracking.escalationRaised', { requestId: result.requestId })); }}>
+                    <button className="btn btn-err" style={{ marginLeft: 'auto' }} onClick={() => {
+                      setEscalated(true);
+                      try { localStorage.setItem(`suvidha:escalated:${result.requestId}`, 'true'); } catch {}
+                      toast.success(t('tracking.escalationRaised', { requestId: result.requestId }));
+                    }}>
                       <I d={ic.sos} size={36} /> {t('tracking.escalate')}
                     </button>
                   )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
@@ -244,34 +244,6 @@ const Gas = () => {
               Selected · {t(`gas.${selectedCategory}`)}
             </span>
 
-            {/* Gas New Connection — sub-type selector (SRS Module 11) */}
-            {selectedCategory === 'newConnection' && (
-              <div style={{ marginBottom: 36 }}>
-                <div className="label-tag" style={{ marginBottom: 20 }}>Request Type</div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-                  {[
-                    { id: 'new_gas', label: 'New Gas Connection', sla: '30 days' },
-                    { id: 'reconnect', label: 'Reconnection', sla: '7 days' },
-                    { id: 'disconnect', label: 'Disconnection', sla: '3 days' },
-                    { id: 'prepaid', label: 'Postpaid → Prepaid', sla: '15 days' },
-                    { id: 'pipeline', label: 'Pipeline Inspection', sla: '5 days' },
-                    { id: 'maintenance', label: 'Maintenance Schedule', sla: '7 days' },
-                  ].map(sub => (
-                    <button
-                      key={sub.id}
-                      type="button"
-                      onClick={() => handleInputChange('gasSubType', sub.id)}
-                      className={`chip${formData.gasSubType === sub.id ? ' act' : ''}`}
-                      style={{ flexDirection: 'column', alignItems: 'flex-start', height: 'auto', padding: 16 }}
-                    >
-                      <div style={{ fontWeight: 700 }}>{sub.label}</div>
-                      <div className="meta" style={{ marginTop: 4 }}>SLA: {sub.sla}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Meter Damage — severity + type */}
             {selectedCategory === 'meterDamage' && (
               <div style={{ marginBottom: 36 }}>
@@ -279,23 +251,32 @@ const Gas = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40 }}>
                   <div>
                     <label className="flab">{t('gas.issueType')} *</label>
-                    <select className="field" value={formData.meterIssueType || ''} onChange={e => handleInputChange('meterIssueType', e.target.value)} required>
-                      <option value="">{t('gas.selectIssueType')}</option>
-                      <option value="damaged">Physically Damaged</option>
-                      <option value="malfunctioning">Showing Wrong Readings</option>
-                      <option value="leaking">Gas Leaking at Meter</option>
-                      <option value="installation">New Meter Installation</option>
-                      <option value="replacement">Replacement Required</option>
-                    </select>
+                    <Select
+                      value={formData.meterIssueType || ''}
+                      onChange={e => handleInputChange('meterIssueType', e.target.value)}
+                      placeholder={t('gas.selectIssueType')}
+                      options={[
+                        { value: 'damaged', label: 'Physically Damaged' },
+                        { value: 'malfunctioning', label: 'Showing Wrong Readings' },
+                        { value: 'leaking', label: 'Gas Leaking at Meter' },
+                        { value: 'installation', label: 'New Meter Installation' },
+                        { value: 'replacement', label: 'Replacement Required' },
+                      ]}
+                      required
+                    />
                   </div>
                   <div>
                     <label className="flab">{t('gas.priority')}</label>
-                    <select className="field" value={formData.priority || ''} onChange={e => handleInputChange('priority', e.target.value)}>
-                      <option value="">{t('gas.selectPriority')}</option>
-                      <option value="emergency">Emergency — Gas Leak (24h)</option>
-                      <option value="urgent">Urgent (3 days)</option>
-                      <option value="normal">Normal (10 days)</option>
-                    </select>
+                    <Select
+                      value={formData.priority || ''}
+                      onChange={e => handleInputChange('priority', e.target.value)}
+                      placeholder={t('gas.selectPriority')}
+                      options={[
+                        { value: 'emergency', label: 'Emergency — Gas Leak (24h)' },
+                        { value: 'urgent', label: 'Urgent (3 days)' },
+                        { value: 'normal', label: 'Normal (10 days)' },
+                      ]}
+                    />
                   </div>
                 </div>
               </div>
@@ -329,26 +310,37 @@ const Gas = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 40, marginTop: 36 }}>
               <div>
                 <label className="flab">{t('form.state')} *</label>
-                <select className="field" value={formData.state} onChange={(e) => handleInputChange('state', e.target.value)} required>
-                  <option value="">{t('form.selectState')}</option>
-                  {states.map(s => <option key={s.id} value={s.id}>{getLocalizedName(s)}</option>)}
-                </select>
+                <Select
+                  value={formData.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  placeholder={t('form.selectState')}
+                  options={states.map(s => ({ value: s.id, label: getLocalizedName(s) }))}
+                  required
+                />
                 {errors.state && <div className="meta" style={{ color: 'var(--err)' }}>{errors.state}</div>}
               </div>
               <div>
                 <label className="flab">{t('form.city')} *</label>
-                <select className="field" value={formData.city} onChange={(e) => handleInputChange('city', e.target.value)} disabled={!formData.state} required>
-                  <option value="">{t('form.selectCity')}</option>
-                  {availableCities.map(c => <option key={c.id} value={c.id}>{getLocalizedName(c)}</option>)}
-                </select>
+                <Select
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder={t('form.selectCity')}
+                  options={availableCities.map(c => ({ value: c.id, label: getLocalizedName(c) }))}
+                  disabled={!formData.state}
+                  required
+                />
                 {errors.city && <div className="meta" style={{ color: 'var(--err)' }}>{errors.city}</div>}
               </div>
               <div>
                 <label className="flab">{t('form.ward')} *</label>
-                <select className="field" value={formData.ward} onChange={(e) => handleInputChange('ward', e.target.value)} disabled={!formData.city} required>
-                  <option value="">{t('form.selectWard')}</option>
-                  {availableWards.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                </select>
+                <Select
+                  value={formData.ward}
+                  onChange={(e) => handleInputChange('ward', e.target.value)}
+                  placeholder={t('form.selectWard')}
+                  options={availableWards.map(w => ({ value: w.id, label: w.name }))}
+                  disabled={!formData.city}
+                  required
+                />
                 {errors.ward && <div className="meta" style={{ color: 'var(--err)' }}>{errors.ward}</div>}
               </div>
             </div>

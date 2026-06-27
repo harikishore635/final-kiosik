@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
+import UpiPaymentScreen from '../components/payment/UpiPaymentScreen';
+import { useToast } from '../hooks/useToast';
 import QRUpload from '../components/QRUpload';
 import { states, cities, wards } from '../utils/constants';
 import { generateRequestId, getCurrentTimestamp } from '../utils/helpers';
@@ -42,8 +44,9 @@ const busPassTypes = [
 const Transport = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const toast = useToast();
 
-  const [view, setView] = useState('categories'); // 'categories' | 'booking' | 'complaint'
+  const [view, setView] = useState('categories'); // 'categories' | 'booking' | 'payment' | 'complaint'
   const [step, setStep] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('');
 
@@ -198,6 +201,13 @@ const Transport = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Step 1: validate journey/pass details, then go to the payment screen.
+  // No ticket is minted until payment is confirmed (handleBookTicket).
+  const handleProceedToPayment = () => {
+    if (!validateBooking()) return;
+    setView('payment');
+  };
+
   const handleBookTicket = async () => {
     if (!validateBooking()) return;
     setLoading(true);
@@ -246,17 +256,21 @@ const Transport = () => {
         status: 'confirmed',
         timestamp: getCurrentTimestamp(),
       };
-      setBookingResult(result);
       addReceipt({
         requestId: ticketId,
         citizenName: bookingData.passengerName,
+        ownerName: bookingData.passengerName,
         mobile: bookingData.passengerMobile,
+        ownerMobile: bookingData.passengerMobile,
+        ownerAadhaar: sessionStorage.getItem('aadhaarUid') || '',
         serviceType: 'transport',
         serviceCategory: `Ticket Booking - ${selectedCategory}`,
         timestamp: getCurrentTimestamp(),
         status: 'confirmed',
         fare: `₹${fare}`,
       });
+      // Payment confirmed -> ticket issued -> go to receipt and auto-print it.
+      navigate(`/receipt?org=transport&id=${encodeURIComponent(ticketId)}&autoprint=1`);
     } catch (error) {
       console.error('Booking error:', error);
     } finally {
@@ -396,6 +410,18 @@ const Transport = () => {
     );
   }
 
+  if (view === 'payment') {
+    return (
+      <UpiPaymentScreen
+        amount={calculateFare()}
+        note={`Transport ${selectedCategory}`}
+        title={selectedCategory === 'busPass' ? t('transport.purchasePass', 'Purchase Pass') : t('transport.payForTicket', 'Pay for Ticket')}
+        onSuccess={handleBookTicket}
+        onCancel={() => { setView('booking'); toast.info(t('payment.cancelledMsg', 'Payment cancelled — no ticket was issued')); }}
+      />
+    );
+  }
+
   return (
     <VK bg="color-mix(in oklab, var(--dept-trans) 5%, var(--surface-0))">
       {/* CATEGORY SELECTION */}
@@ -456,7 +482,7 @@ const Transport = () => {
           <button
             type="button"
             className="btn btn-quiet"
-            style={{ alignSelf: 'center', fontSize: 22, padding: '18px 48px' }}
+            style={{ alignSelf: 'center' }}
             onClick={() => navigate('/home')}
           >
             <I d={ic.back} size={24} /> {t('home.backToOrgs', 'Back to Organizations')}
@@ -495,18 +521,24 @@ const Transport = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '36px 40px', marginTop: 36 }}>
                   <div>
                     <label className="flab">{t('transport.fromStation')} *</label>
-                    <select className="field" value={bookingData.fromStation} onChange={(e) => handleBookingChange('fromStation', e.target.value)} required>
-                      <option value="">{t('transport.selectDeparture')}</option>
-                      {metroStations.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <Select
+                      value={bookingData.fromStation}
+                      onChange={(e) => handleBookingChange('fromStation', e.target.value)}
+                      placeholder={t('transport.selectDeparture')}
+                      options={metroStations.map(s => ({ value: s, label: s }))}
+                      required
+                    />
                     {errors.fromStation && <div className="meta" style={{ color: 'var(--err)' }}>{errors.fromStation}</div>}
                   </div>
                   <div>
                     <label className="flab">{t('transport.toStation')} *</label>
-                    <select className="field" value={bookingData.toStation} onChange={(e) => handleBookingChange('toStation', e.target.value)} required>
-                      <option value="">{t('transport.selectArrival')}</option>
-                      {metroStations.filter(s => s !== bookingData.fromStation).map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
+                    <Select
+                      value={bookingData.toStation}
+                      onChange={(e) => handleBookingChange('toStation', e.target.value)}
+                      placeholder={t('transport.selectArrival')}
+                      options={metroStations.filter(s => s !== bookingData.fromStation).map(s => ({ value: s, label: s }))}
+                      required
+                    />
                     {errors.toStation && <div className="meta" style={{ color: 'var(--err)' }}>{errors.toStation}</div>}
                   </div>
                 </div>
@@ -518,9 +550,11 @@ const Transport = () => {
                   </div>
                   <div>
                     <label className="flab">{t('transport.numberOfPassengers')}</label>
-                    <select className="field" value={bookingData.passengers} onChange={(e) => handleBookingChange('passengers', e.target.value)}>
-                      {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{t('transport.passengerCount', { count: n })}</option>)}
-                    </select>
+                    <Select
+                      value={bookingData.passengers}
+                      onChange={(e) => handleBookingChange('passengers', e.target.value)}
+                      options={[1, 2, 3, 4, 5, 6].map(n => ({ value: String(n), label: t('transport.passengerCount', { count: n }) }))}
+                    />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                     <div className="card" style={{ width: '100%', textAlign: 'center', padding: 16, background: 'color-mix(in oklab, var(--ok) 10%, white)' }}>
@@ -536,10 +570,13 @@ const Transport = () => {
               <>
                 <div style={{ marginTop: 36 }}>
                   <label className="flab">{t('transport.selectBusRoute')} *</label>
-                  <select className="field" value={bookingData.busRoute} onChange={(e) => handleBookingChange('busRoute', e.target.value)} required>
-                    <option value="">{t('transport.chooseRoute')}</option>
-                    {busRoutes.map(r => <option key={r.id} value={r.id}>{r.name} — ₹{r.fare}</option>)}
-                  </select>
+                  <Select
+                    value={bookingData.busRoute}
+                    onChange={(e) => handleBookingChange('busRoute', e.target.value)}
+                    placeholder={t('transport.chooseRoute')}
+                    options={busRoutes.map(r => ({ value: r.id, label: `${r.name} — ₹${r.fare}` }))}
+                    required
+                  />
                   {errors.busRoute && <div className="meta" style={{ color: 'var(--err)' }}>{errors.busRoute}</div>}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 40, marginTop: 36 }}>
@@ -550,9 +587,11 @@ const Transport = () => {
                   </div>
                   <div>
                     <label className="flab">{t('transport.passengers')}</label>
-                    <select className="field" value={bookingData.passengers} onChange={(e) => handleBookingChange('passengers', e.target.value)}>
-                      {[1, 2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{t('transport.passengerCount', { count: n })}</option>)}
-                    </select>
+                    <Select
+                      value={bookingData.passengers}
+                      onChange={(e) => handleBookingChange('passengers', e.target.value)}
+                      options={[1, 2, 3, 4, 5, 6].map(n => ({ value: String(n), label: t('transport.passengerCount', { count: n }) }))}
+                    />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                     <div className="card" style={{ width: '100%', textAlign: 'center', padding: 16, background: 'color-mix(in oklab, var(--ok) 10%, white)' }}>
@@ -598,8 +637,8 @@ const Transport = () => {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 32, marginTop: 52, paddingTop: 44, borderTop: '1.5px solid var(--line)' }}>
               <button className="btn btn-ghost" onClick={() => { setView('categories'); setErrors({}); }}>{t('app.back')}</button>
-              <button className="btn btn-pri btn-xl" onClick={handleBookTicket}>
-                {selectedCategory === 'busPass' ? t('transport.purchasePass') : t('transport.bookTicket')} — ₹{calculateFare()}
+              <button className="btn btn-pri btn-xl" onClick={handleProceedToPayment}>
+                {t('transport.proceedToPayment', 'Proceed to Payment')} — ₹{calculateFare()}
               </button>
             </div>
           </div>
@@ -651,26 +690,37 @@ const Transport = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 40, marginTop: 36 }}>
               <div>
                 <label className="flab">{t('form.state')} *</label>
-                <select className="field" value={formData.state} onChange={(e) => handleInputChange('state', e.target.value)} required>
-                  <option value="">{t('form.selectState')}</option>
-                  {states.map(s => <option key={s.id} value={s.id}>{getLocalizedName(s)}</option>)}
-                </select>
+                <Select
+                  value={formData.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  placeholder={t('form.selectState')}
+                  options={states.map(s => ({ value: s.id, label: getLocalizedName(s) }))}
+                  required
+                />
                 {errors.state && <div className="meta" style={{ color: 'var(--err)' }}>{errors.state}</div>}
               </div>
               <div>
                 <label className="flab">{t('form.city')} *</label>
-                <select className="field" value={formData.city} onChange={(e) => handleInputChange('city', e.target.value)} disabled={!formData.state} required>
-                  <option value="">{t('form.selectCity')}</option>
-                  {availableCities.map(c => <option key={c.id} value={c.id}>{getLocalizedName(c)}</option>)}
-                </select>
+                <Select
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder={t('form.selectCity')}
+                  options={availableCities.map(c => ({ value: c.id, label: getLocalizedName(c) }))}
+                  disabled={!formData.state}
+                  required
+                />
                 {errors.city && <div className="meta" style={{ color: 'var(--err)' }}>{errors.city}</div>}
               </div>
               <div>
                 <label className="flab">{t('form.ward')} *</label>
-                <select className="field" value={formData.ward} onChange={(e) => handleInputChange('ward', e.target.value)} disabled={!formData.city} required>
-                  <option value="">{t('form.selectWard')}</option>
-                  {availableWards.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                </select>
+                <Select
+                  value={formData.ward}
+                  onChange={(e) => handleInputChange('ward', e.target.value)}
+                  placeholder={t('form.selectWard')}
+                  options={availableWards.map(w => ({ value: w.id, label: w.name }))}
+                  disabled={!formData.city}
+                  required
+                />
                 {errors.ward && <div className="meta" style={{ color: 'var(--err)' }}>{errors.ward}</div>}
               </div>
             </div>

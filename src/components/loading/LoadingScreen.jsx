@@ -38,16 +38,16 @@ export default function LoadingScreen({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 22,
-        padding: 30,
+        gap: 'calc(36px * var(--ui-scale))',
+        padding: 'calc(40px * var(--ui-scale))',
         textAlign: 'center',
         background: bg,
-        minHeight: '100%',
+        minHeight: '60vh',
       }}
     >
-      <RadiantLoader variant={variant} size={size} dark={dark} />
+      <RadiantLoader variant={variant} size={Math.round(size * 1.7)} dark={dark} />
       {heading && (
-        <h2 style={{ fontSize: 21, fontWeight: 700, color: dark ? 'var(--cream)' : 'var(--ink-900)', margin: 0 }}>
+        <h2 style={{ fontSize: 'calc(40px * var(--ui-scale))', fontWeight: 800, color: dark ? 'var(--cream)' : 'var(--ink-900)', margin: 0 }}>
           {heading}
         </h2>
       )}
@@ -55,7 +55,7 @@ export default function LoadingScreen({
         role="status"
         aria-live="polite"
         aria-atomic="true"
-        style={{ fontSize: 14, color: dark ? 'color-mix(in oklab, var(--cream) 72%, transparent)' : 'var(--ink-500)', lineHeight: 1.45, maxWidth: 420 }}
+        style={{ fontSize: 'calc(24px * var(--ui-scale))', color: dark ? 'color-mix(in oklab, var(--cream) 72%, transparent)' : 'var(--ink-500)', lineHeight: 1.45, maxWidth: 'calc(640px * var(--ui-scale))' }}
       >
         {bodyText}
       </div>

@@ -129,7 +129,7 @@ export default function Home() {
         <div className="label-tag" style={{ color: 'var(--saffron-700)' }}>
           {t('home.welcomeTag', 'স্বাগতম · WELCOME BACK')}
         </div>
-        <h1 className="h2" style={{ marginTop: 8 }}>
+        <h1 className="h1" style={{ marginTop: 8 }}>
           {t('home.helloUser', 'Hello')}, {firstName || t('home.citizen', 'Citizen')} {greetingMode}
         </h1>
         <p className="body-l" style={{ marginTop: 6 }}>

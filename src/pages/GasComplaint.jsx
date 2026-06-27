@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { startSTT, stopSTT } from '../ai/voice/speechRecognition';
 import { useVoiceFormSubmit } from '../hooks/useVoiceFormSubmit';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
@@ -24,11 +24,11 @@ const GasComplaint = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
 
   const gasComplaintCategories = [
-    { id: 'billing', label: t('gasComplaint.billing', 'Incorrect Gas Bill'), glyph: ic.doc, sla: '7 working days' },
-    { id: 'gasleak', label: t('gasComplaint.gasleak', 'Gas Leak / Safety Issue'), glyph: ic.flame, sla: '24 hours (Emergency)' },
-    { id: 'meter', label: t('gasComplaint.meterIssue', 'Meter Damage / Malfunction'), glyph: ic.cog, sla: '10 working days' },
-    { id: 'disconnection', label: t('gasComplaint.disconnection', 'Disconnection Without Notice'), glyph: ic.x, sla: '3 working days' },
-    { id: 'other', label: t('gasComplaint.other', 'Other Grievance'), glyph: ic.help, sla: '14 working days' },
+    { id: 'billing', label: t('gasComplaint.billing', 'Incorrect Gas Bill'), glyph: ic.doc, sla: '7 working days', desc: t('gasComplaint.billingDesc', 'Wrong amount, double charge, or a meter-reading dispute on your gas bill') },
+    { id: 'gasleak', label: t('gasComplaint.gasleak', 'Gas Leak / Safety Issue'), glyph: ic.flame, sla: '24 hours (Emergency)', desc: t('gasComplaint.gasleakDesc', 'Smell of gas, hissing, or a suspected leak — handled as a safety emergency') },
+    { id: 'meter', label: t('gasComplaint.meterIssue', 'Meter Damage / Malfunction'), glyph: ic.cog, sla: '10 working days', desc: t('gasComplaint.meterDesc', 'Damaged, stuck, or faulty gas meter needing repair or replacement') },
+    { id: 'disconnection', label: t('gasComplaint.disconnection', 'Disconnection Without Notice'), glyph: ic.x, sla: '3 working days', desc: t('gasComplaint.disconnectionDesc', 'Supply cut without prior notice or after your bill was paid') },
+    { id: 'other', label: t('gasComplaint.other', 'Other Grievance'), glyph: ic.help, sla: '14 working days', desc: t('gasComplaint.otherDesc', 'Any other gas-related grievance not covered by the categories above') },
   ];
 
   const selectedCategoryData = gasComplaintCategories.find(c => c.id === selectedCategory);
@@ -229,7 +229,8 @@ const GasComplaint = () => {
                   <DD color="var(--dept-gas)" glyph={cat.glyph} size={72} isz={36} />
                   <div>
                     <div className="nm" style={{ fontSize: 22 }}>{cat.label}</div>
-                    <div className="meta" style={{ marginTop: 6 }}>SLA: {cat.sla}</div>
+                    <div className="meta" style={{ marginTop: 6, lineHeight: 1.4 }}>{cat.desc}</div>
+                    <div className="meta" style={{ marginTop: 8, fontWeight: 700, color: 'var(--dept-gas)' }}>{t('gasComplaint.resolutionIn', 'Resolution in')}: {cat.sla}</div>
                   </div>
                 </button>
               ))}
@@ -287,26 +288,39 @@ const GasComplaint = () => {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 40, marginTop: 36 }}>
             <div>
               <label className="flab">{t('form.state')} *</label>
-              <select className="field" data-voice-field="state" value={formData.state} onChange={(e) => handleInputChange('state', e.target.value)} required>
-                <option value="">{t('form.selectState')}</option>
-                {states.map(s => <option key={s.id} value={s.id}>{getLocalizedName(s)}</option>)}
-              </select>
+              <Select
+                voiceField="state"
+                value={formData.state}
+                onChange={(e) => handleInputChange('state', e.target.value)}
+                placeholder={t('form.selectState')}
+                options={states.map(s => ({ value: s.id, label: getLocalizedName(s) }))}
+                required
+              />
               {errors.state && <div className="meta" style={{ color: 'var(--err)' }}>{errors.state}</div>}
             </div>
             <div>
               <label className="flab">{t('form.city')} *</label>
-              <select className="field" data-voice-field="city" value={formData.city} onChange={(e) => handleInputChange('city', e.target.value)} disabled={!formData.state} required>
-                <option value="">{t('form.selectCity')}</option>
-                {availableCities.map(c => <option key={c.id} value={c.id}>{getLocalizedName(c)}</option>)}
-              </select>
+              <Select
+                voiceField="city"
+                value={formData.city}
+                onChange={(e) => handleInputChange('city', e.target.value)}
+                placeholder={t('form.selectCity')}
+                options={availableCities.map(c => ({ value: c.id, label: getLocalizedName(c) }))}
+                disabled={!formData.state}
+                required
+              />
               {errors.city && <div className="meta" style={{ color: 'var(--err)' }}>{errors.city}</div>}
             </div>
             <div>
               <label className="flab">{t('form.ward')}</label>
-              <select className="field" data-voice-field="ward" value={formData.ward} onChange={(e) => handleInputChange('ward', e.target.value)} disabled={!formData.city}>
-                <option value="">{t('form.selectWard')}</option>
-                {availableWards.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-              </select>
+              <Select
+                voiceField="ward"
+                value={formData.ward}
+                onChange={(e) => handleInputChange('ward', e.target.value)}
+                placeholder={t('form.selectWard')}
+                options={availableWards.map(w => ({ value: w.id, label: w.name }))}
+                disabled={!formData.city}
+              />
             </div>
           </div>
 

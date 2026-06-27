@@ -11,9 +11,44 @@ const GasMenu = () => {
     {
       id: 'newConnection',
       glyph: ic.plus,
-      title: t('home.gasNewConnection', 'New Connection / Connection Change'),
-      description: t('home.gasNewConnectionDesc', 'New gas, reconnect, disconnect, prepaid conversion, pipeline'),
+      title: t('home.gasNewConnection', 'New Gas Connection'),
+      description: t('home.gasNewConnectionDesc', 'Apply for a new domestic or commercial gas connection'),
       path: '/gas?category=newConnection',
+    },
+    {
+      id: 'reconnect',
+      glyph: ic.flame,
+      title: t('home.gasReconnect', 'Reconnection'),
+      description: t('home.gasReconnectDesc', 'Restore a previously disconnected gas connection'),
+      path: '/gas?category=reconnect',
+    },
+    {
+      id: 'disconnect',
+      glyph: ic.bolt,
+      title: t('home.gasDisconnect', 'Disconnection'),
+      description: t('home.gasDisconnectDesc', 'Request temporary or permanent disconnection'),
+      path: '/gas?category=disconnect',
+    },
+    {
+      id: 'prepaidConversion',
+      glyph: ic.card,
+      title: t('home.gasPrepaid', 'Postpaid → Prepaid'),
+      description: t('home.gasPrepaidDesc', 'Switch your gas billing plan to prepaid'),
+      path: '/gas?category=prepaidConversion',
+    },
+    {
+      id: 'pipelineInspection',
+      glyph: ic.track,
+      title: t('home.gasPipeline', 'Pipeline Inspection'),
+      description: t('home.gasPipelineDesc', 'Book a safety inspection of your gas pipeline'),
+      path: '/gas?category=pipelineInspection',
+    },
+    {
+      id: 'maintenance',
+      glyph: ic.chat,
+      title: t('home.gasMaintenance', 'Maintenance Scheduling'),
+      description: t('home.gasMaintenanceDesc', 'Schedule routine gas equipment maintenance'),
+      path: '/gas?category=maintenance',
     },
     {
       id: 'meterDamage',
@@ -61,7 +96,7 @@ const GasMenu = () => {
           <div className="label-tag" style={{ color: 'var(--dept-gas)', marginBottom: 14 }}>
             Assam Gas Company
           </div>
-          <h1 className="h2">{t('home.gasDept', 'Assam Gas')}</h1>
+          <h1 className="h1">{t('home.gasDept', 'Assam Gas')}</h1>
           <p className="body-l" style={{ marginTop: 14, color: 'var(--ink-500)' }}>
             {t('home.gasDeptDesc', 'Gas connections · Bills · Complaints · Maintenance')}
           </p>
@@ -97,7 +132,7 @@ const GasMenu = () => {
       <button
         type="button"
         className="btn btn-quiet"
-        style={{ alignSelf: 'center', fontSize: 22, padding: '18px 48px' }}
+        style={{ alignSelf: 'center' }}
         onClick={() => navigate('/home')}
       >
         <I d={ic.back} size={24} /> {t('home.backToOrgs', 'Back to Organizations')}

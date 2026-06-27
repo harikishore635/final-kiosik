@@ -11,24 +11,24 @@ export default function SubmissionSteps({ step, labels }) {
 
   if (userMode === 'elderly') {
     return (
-      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--ink-900)', textAlign: 'center' }}>
+      <div style={{ fontSize: 'calc(34px * var(--ui-scale))', fontWeight: 800, color: 'var(--ink-900)', textAlign: 'center' }}>
         {t('loading.submittingElderly', 'Your request is being submitted')}
       </div>
     );
   }
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 16, textAlign: 'left' }}>
+    <div style={{ width: '100%', maxWidth: 'calc(580px * var(--ui-scale))', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'calc(22px * var(--ui-scale))', textAlign: 'left' }}>
       {labels.map((label, i) => {
         const isDone = i < step;
         const isActive = i === step;
         return (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 'calc(18px * var(--ui-scale))' }}>
             {isDone && (
               <span
                 style={{
-                  width: 26, height: 26, borderRadius: '50%', background: 'var(--ok)',
-                  color: 'white', display: 'grid', placeItems: 'center', fontSize: 14,
+                  width: 'calc(42px * var(--ui-scale))', height: 'calc(42px * var(--ui-scale))', borderRadius: '50%', background: 'var(--ok)',
+                  color: 'white', display: 'grid', placeItems: 'center', fontSize: 'calc(22px * var(--ui-scale))',
                   fontWeight: 700, flexShrink: 0,
                 }}
               >
@@ -38,16 +38,16 @@ export default function SubmissionSteps({ step, labels }) {
             {isActive && (
               <span
                 style={{
-                  width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                  width: 'calc(42px * var(--ui-scale))', height: 'calc(42px * var(--ui-scale))', borderRadius: '50%', flexShrink: 0,
                   border: '3px solid var(--indigo-100)', borderTopColor: 'var(--indigo-700)',
                   animation: 'spin 0.7s linear infinite',
                 }}
               />
             )}
             {!isDone && !isActive && (
-              <span style={{ width: 26, height: 26, borderRadius: '50%', border: '2px solid var(--line)', flexShrink: 0 }} />
+              <span style={{ width: 'calc(42px * var(--ui-scale))', height: 'calc(42px * var(--ui-scale))', borderRadius: '50%', border: '2px solid var(--line)', flexShrink: 0 }} />
             )}
-            <span style={{ fontSize: 15, color: 'var(--ink-700)' }}>{label}</span>
+            <span style={{ fontSize: 'calc(24px * var(--ui-scale))', color: 'var(--ink-700)' }}>{label}</span>
           </div>
         );
       })}

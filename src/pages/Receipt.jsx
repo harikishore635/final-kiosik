@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { VK, I, ic } from '../components/kiosk';
+import { Select } from '../components';
 import SendToPhone from '../components/SendToPhone';
 import { formatDate, formatDateShort, printReceipt } from '../utils/helpers';
 import { getReceipts } from '../utils/receipts';
@@ -41,8 +42,6 @@ const Receipt = () => {
   const [activeReceiptIndex, setActiveReceiptIndex] = useState(0);
   const [thermalMode, setThermalMode] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
-  const [smsSent, setSmsSent] = useState(false);
-  const [whatsappSent, setWhatsappSent] = useState(false);
 
   const requestedOrg = normalizeValue(searchParams.get('org'));
   const requestedReceiptId = (searchParams.get('id') || '').trim();
@@ -106,6 +105,18 @@ const Receipt = () => {
     setActiveReceiptIndex(selectedIndex >= 0 ? selectedIndex : 0);
   }, [requestedOrg, requestedReceiptId]);
 
+  // Auto-print once when arriving with ?autoprint=1 (e.g. straight after a
+  // confirmed Transport payment) — the ticket prints without a manual tap.
+  const autoPrint = (searchParams.get('autoprint') || '') === '1';
+  const autoPrintedRef = useRef(false);
+  useEffect(() => {
+    if (autoPrint && receiptData && !autoPrintedRef.current) {
+      autoPrintedRef.current = true;
+      const tid = setTimeout(() => printReceipt(), 700);
+      return () => clearTimeout(tid);
+    }
+  }, [autoPrint, receiptData]);
+
   if (!receiptData) {
     return (
       <VK bg="var(--surface-1)">
@@ -160,44 +171,9 @@ const Receipt = () => {
     setTimeout(() => setEmailSent(false), 3000);
   };
 
-  const sendNotification = async (method) => {
-    const mobile = receiptData?.mobile || sessionStorage.getItem('userMobile');
-    if (!mobile) return false;
-    try {
-      const resp = await fetch('/api/notifications/send-receipt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mobile,
-          method,
-          documentType: receiptData?.serviceCategory || receiptData?.serviceType || 'Request',
-          documentId: receiptData?.requestId,
-          citizenName: receiptData?.citizenName || sessionStorage.getItem('userName'),
-          language: i18n.language || 'en',
-        }),
-      });
-      const data = await resp.json();
-      return data.success;
-    } catch {
-      return false;
-    }
-  };
-
-  const handleSendSMS = async () => {
-    setSmsSent(true);
-    await sendNotification('sms');
-    setTimeout(() => setSmsSent(false), 4000);
-  };
-
-  const handleSendWhatsApp = async () => {
-    setWhatsappSent(true);
-    await sendNotification('whatsapp');
-    setTimeout(() => setWhatsappSent(false), 4000);
-  };
-
   return (
     <VK bg="var(--surface-1)">
-      <div style={{ maxWidth: 760, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1480, width: '100%', margin: '0 auto' }}>
         {/* Success Animation */}
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <div style={{
@@ -223,13 +199,16 @@ const Receipt = () => {
                 <button type="button" className="chip" onClick={handlePreviousReceipt} disabled={activeReceiptIndex === 0}>
                   Previous
                 </button>
-                <select className="field" style={{ maxWidth: 280 }} value={activeReceiptIndex} onChange={handleSelectReceipt}>
-                  {receiptList.map((receipt, index) => (
-                    <option key={`${receipt.requestId}-${index}`} value={index}>
-                      {receipt.requestId} - {formatDateShort(receipt.timestamp, i18n.language === 'hi' ? 'hi-IN' : i18n.language === 'ta' ? 'ta-IN' : 'en-IN')}
-                    </option>
-                  ))}
-                </select>
+                <div style={{ width: 'calc(380px * var(--ui-scale))', maxWidth: '100%' }}>
+                  <Select
+                    value={activeReceiptIndex}
+                    onChange={handleSelectReceipt}
+                    options={receiptList.map((receipt, index) => ({
+                      value: index,
+                      label: `${receipt.requestId} - ${formatDateShort(receipt.timestamp, i18n.language === 'hi' ? 'hi-IN' : i18n.language === 'ta' ? 'ta-IN' : 'en-IN')}`,
+                    }))}
+                  />
+                </div>
                 <button type="button" className="chip" onClick={handleNextReceipt} disabled={activeReceiptIndex === receiptList.length - 1}>
                   Next
                 </button>
@@ -241,20 +220,20 @@ const Receipt = () => {
         {/* Receipt Card - Printable Area */}
         <div id="receipt-content" className="card print:shadow-none" style={{ padding: 0, overflow: 'hidden', maxWidth: thermalMode ? 300 : undefined, margin: thermalMode ? '0 auto' : undefined }}>
           {/* Receipt Header */}
-          <div style={{ background: 'var(--indigo-700)', color: 'var(--cream)', textAlign: 'center', padding: '48px 56px' }}>
+          <div className="rcpt-head" style={{ background: 'var(--indigo-700)', color: 'var(--cream)', textAlign: 'center', padding: '48px 56px' }}>
             <div className="label-tag" style={{ color: 'rgba(255,255,255,.65)' }}>
               SUVIDHA · Government of Assam
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 30, letterSpacing: '.1em', marginTop: 24, opacity: .85 }}>
               {t('receipt.requestId')}
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 80, fontWeight: 700, letterSpacing: '.04em', marginTop: 8 }}>
+            <div className="rcpt-id" style={{ fontFamily: 'var(--font-mono)', fontSize: 80, fontWeight: 700, letterSpacing: '.04em', marginTop: 8 }}>
               {receiptData.requestId}
             </div>
           </div>
 
           {/* Receipt Body */}
-          <div style={{ padding: '48px 56px' }}>
+          <div className="rcpt-body" style={{ padding: '48px 56px' }}>
             <div className="receipt-row">
               <span className="k">{t('receipt.citizenName')}</span>
               <span className="v">{receiptData.citizenName}</span>
@@ -313,54 +292,68 @@ const Receipt = () => {
 
         {/* Action Buttons - Hide on Print */}
         <div className="print:hidden" style={{ marginTop: 40, display: 'flex', flexDirection: 'column', gap: 24 }}>
-          {/* Send to Phone */}
-          <SendToPhone documentType="Receipt" documentId={receiptData.requestId} />
-
+          {/* Primary navigation - kept above the fold, no scrolling needed */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-            <button className="btn btn-pri" onClick={handlePrint}>
-              <I d={ic.print} size={44} /> {t('receipt.print')}
-            </button>
-            <button className="btn btn-ghost" onClick={handlePrint} aria-label={t('receipt.saveAsPdf')}>
-              <I d={ic.download} size={44} /> {t('receipt.saveAsPdfButton')}
-            </button>
-          </div>
-
-          {/* Email / SMS / WhatsApp Delivery */}
-          <div style={{ display: 'flex', gap: 24 }}>
-            <button className="chip" style={{ flex: 1, justifyContent: 'center' }} onClick={handleSendEmail} disabled={emailSent}>
-              {emailSent ? `✓ ${t('receipt.emailSent', 'Email Sent!')}` : 'Email'}
-            </button>
-            <button className="chip" style={{ flex: 1, justifyContent: 'center' }} onClick={handleSendSMS} disabled={smsSent}>
-              {smsSent ? `✓ ${t('receipt.smsSent', 'SMS Sent!')}` : 'SMS'}
-            </button>
-            <button className="chip" style={{ flex: 1, justifyContent: 'center' }} onClick={handleSendWhatsApp} disabled={whatsappSent}>
-              {whatsappSent ? '✓ WhatsApp Sent!' : 'WhatsApp'}
-            </button>
-          </div>
-
-          {/* Thermal Print Toggle */}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <button className={`chip${thermalMode ? ' act' : ''}`} onClick={() => setThermalMode(!thermalMode)}>
-              {thermalMode ? 'Normal Mode' : 'Thermal Print Mode'}
-            </button>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-            <button className="btn btn-ghost" onClick={handleNewRequest}>
+            <button className="btn btn-pri" onClick={handleNewRequest}>
               <I d={ic.plus} size={32} /> {t('receipt.newRequest')}
             </button>
             <button className="btn btn-quiet" onClick={handleGoHome}>
               <I d={ic.back} size={32} /> {t('receipt.goHome')}
             </button>
           </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 32 }}>
+            <button className="btn btn-ghost" onClick={handlePrint}>
+              <I d={ic.print} size={44} /> {t('receipt.print')}
+            </button>
+            <button className={`btn btn-ghost${thermalMode ? ' act' : ''}`} onClick={() => setThermalMode(!thermalMode)}>
+              <I d={ic.receipt} size={44} /> {thermalMode ? t('receipt.normalLayout', 'Normal Layout') : t('receipt.thermalLayout', 'Thermal Layout')}
+            </button>
+            <button className="btn btn-ghost" onClick={handleSendEmail} disabled={emailSent}>
+              <I d={ic.doc} size={44} /> {emailSent ? `✓ ${t('receipt.emailSent', 'Email Sent!')}` : t('receipt.email', 'Email')}
+            </button>
+          </div>
+
+          {/* Send to Phone - single grouped mobile + SMS/WhatsApp action */}
+          <SendToPhone documentType="Receipt" documentId={receiptData.requestId} />
         </div>
       </div>
 
       <style>{`
         @media print {
-          body * { visibility: hidden; }
-          #receipt-content, #receipt-content * { visibility: visible; }
-          #receipt-content { position: absolute; left: 0; top: 0; width: 100%; }
+          @page { size: 80mm auto; margin: 4mm; }
+          html, body { background: #fff !important; }
+          body * { visibility: hidden !important; }
+          #receipt-content, #receipt-content * { visibility: visible !important; }
+          #receipt-content {
+            position: absolute !important; left: 0 !important; top: 0 !important;
+            width: 280px !important; max-width: 280px !important;
+            margin: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+            background: #fff !important; color: #000 !important;
+            font-family: var(--font-mono), monospace !important;
+          }
+          /* Header collapses to a tight black-on-white block */
+          #receipt-content .rcpt-head {
+            background: #fff !important; color: #000 !important;
+            padding: 0 0 6px !important; border-bottom: 1px solid #000 !important;
+          }
+          #receipt-content .rcpt-head * { color: #000 !important; }
+          #receipt-content .rcpt-id { font-size: 18px !important; margin: 2px 0 0 !important; letter-spacing: .02em !important; }
+          #receipt-content .rcpt-body { padding: 8px 0 0 !important; }
+          /* Tighten the info / track / SLA boxes to single-column rows */
+          #receipt-content .rcpt-body > div {
+            background: #fff !important; padding: 4px 0 !important; margin: 0 !important; border-radius: 0 !important;
+          }
+          #receipt-content .receipt-row {
+            display: flex !important; justify-content: space-between !important; gap: 10px !important;
+            padding: 3px 0 !important; font-size: 11px !important; border: none !important;
+          }
+          #receipt-content .receipt-row .k { color: #000 !important; font-weight: 600 !important; }
+          #receipt-content .receipt-row .v,
+          #receipt-content .receipt-row .badge {
+            color: #000 !important; background: transparent !important; text-align: right !important;
+            overflow-wrap: anywhere !important; word-break: break-word !important;
+          }
         }
       `}</style>
     </VK>

@@ -1,8 +1,8 @@
-import React, { Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { VoiceAssistantProvider } from './ai/provider/VoiceAssistantProvider';
-import { SessionProvider } from './context/SessionContext';
+import { SessionProvider, useSession } from './context/SessionContext';
 import AccessibilityProvider, { useAccessibility } from './components/AccessibilityProvider';
 import { ToastViewport } from './context/ToastContext';
 import EmergencyAlertBanner from './components/EmergencyAlertBanner';
@@ -70,9 +70,12 @@ const AI_EXCLUDED_PATHS = new Set([
   '/language-select', '/voice-select',
 ]);
 
-// After this much inactivity on any citizen-facing page, return to the
-// attract loop (mid-point of the 60-90s range the design spec allows).
-const IDLE_REARM_MS = 75000;
+// Show the attract/idle overlay after 3 minutes of no interaction on any
+// citizen-facing page. The overlay sits ON TOP of the current page, so
+// dismissing it returns the user to exactly where they were — no lost work.
+const ATTRACT_IDLE_MS = 3 * 60 * 1000;
+// Only a real 30-minute inactivity timeout ends the session and forces login.
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 function LoadingScreen() {
   const { t } = useTranslation();
@@ -98,20 +101,46 @@ function AIShell({ children }) {
   const { pathname: path } = useLocation();
   const navigate = useNavigate();
   const { userMode } = useAccessibility();
+  const { resetSession } = useSession();
   const isBlind = userMode === 'blind';
   const isAdminPath = path.startsWith('/admin') || path.startsWith('/super-admin') ||
     path.startsWith('/security') || path.startsWith('/kiosk-ops') || path.startsWith('/org/');
   const isAuthPath = AI_EXCLUDED_PATHS.has(path);
   const showChatbot = !isAdminPath && !isAuthPath;
 
-  // Idle re-arm: any citizen-facing, non-attract, non-admin page returns to
-  // the attract loop after IDLE_REARM_MS of no touch/keyboard activity.
-  // Disabled for now — attract page switched off.
+  const [attractOn, setAttractOn] = useState(false);
+
+  // Citizen-facing service pages only — never on auth/onboarding, admin, or the
+  // standalone /attract route.
+  const inCitizenSession = !isAdminPath && !isAuthPath && path !== '/attract';
+
+  // After 3 min idle, raise the attract overlay. It sits on top of the current
+  // page (which stays mounted), so any in-progress form survives; one touch
+  // dismisses it in place — attract never resets progress.
   useIdleRearm({
-    timeoutMs: IDLE_REARM_MS,
-    enabled: false,
-    onIdle: () => navigate('/attract'),
+    timeoutMs: ATTRACT_IDLE_MS,
+    enabled: inCitizenSession,
+    onIdle: () => setAttractOn(true),
   });
+
+  // Only a real 30-min inactivity timeout ends the session and returns to login.
+  useIdleRearm({
+    timeoutMs: SESSION_TIMEOUT_MS,
+    enabled: inCitizenSession,
+    onIdle: () => {
+      setAttractOn(false);
+      try { resetSession(); } catch { /* ok */ }
+      try {
+        ['isLoggedIn', 'actorType', 'userName', 'userMobile', 'aadhaarUid', 'govId',
+         'govIdType', 'citizenData', 'userMode', 'voiceNavAlwaysOn', 'autoDetectedMode']
+          .forEach((k) => sessionStorage.removeItem(k));
+      } catch { /* ok */ }
+      navigate('/login', { replace: true });
+    },
+  });
+
+  // Drop the overlay whenever the route changes (e.g. after a timeout redirect).
+  useEffect(() => { setAttractOn(false); }, [path]);
 
   return (
     <div className="kiosk-stage">
@@ -126,6 +155,13 @@ function AIShell({ children }) {
 
       {/* AIChatbot — floating text chat widget, always visible on citizen pages */}
       {showChatbot && <AIChatbot />}
+
+      {/* Attract overlay — covers everything (incl. SOS) without a route change */}
+      {attractOn && (
+        <Suspense fallback={null}>
+          <Attract onDismiss={() => setAttractOn(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }

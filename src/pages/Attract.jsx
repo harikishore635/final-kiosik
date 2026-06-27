@@ -53,7 +53,7 @@ function formatDate(d) {
   return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).toUpperCase();
 }
 
-export default function Attract() {
+export default function Attract({ onDismiss } = {}) {
   useKioskScale();
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -88,7 +88,9 @@ export default function Attract() {
 
   const dock = makeDock(t);
   const greet = GREETINGS[greetIndex];
-  const enter = () => navigate('/');
+  // As an overlay (onDismiss set), a touch returns to the page underneath with
+  // its state intact. As a standalone route, it hands off to Landing.
+  const enter = () => { if (onDismiss) { onDismiss(); return; } navigate('/'); };
 
   return (
     <div
@@ -98,7 +100,7 @@ export default function Attract() {
       aria-label={t('attract.ctaLabel', 'Touch anywhere to begin')}
       onPointerDown={enter}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') enter(); }}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', ...(onDismiss ? { position: 'absolute', inset: 0, zIndex: 10000 } : null) }}
     >
       {/* ambient blobs */}
       {!reducedMotion && (

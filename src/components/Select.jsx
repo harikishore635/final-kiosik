@@ -74,12 +74,12 @@ const Select = ({
           data-voice-field={voiceField || undefined}
           onClick={() => !disabled && setOpen((o) => !o)}
           className={`
-            w-full px-[calc(42px*var(--ui-scale))] py-[calc(34px*var(--ui-scale))] text-kiosk-3xl rounded-[calc(28px*var(--ui-scale))] border-2 text-left min-h-[calc(120px*var(--ui-scale))]
-            transition-all duration-200 touch-manipulation
+            w-full px-[calc(28px*var(--ui-scale))] py-[calc(22px*var(--ui-scale))] text-kiosk-lg rounded-[calc(20px*var(--ui-scale))] border-2 text-left min-h-[calc(88px*var(--ui-scale))]
+            transition-all duration-200 touch-manipulation truncate
             ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-300 focus:border-government-blue focus:ring-blue-200'}
             ${disabled ? 'bg-gray-100 cursor-not-allowed text-gray-400' : 'bg-white'}
             focus:outline-none focus:ring-4
-            pr-[calc(64px*var(--ui-scale))]
+            pr-[calc(48px*var(--ui-scale))]
           `}
           {...props}
         >
@@ -87,8 +87,8 @@ const Select = ({
             <span className="text-gray-400">{placeholder}</span>
           )}
         </button>
-        <div className="absolute right-[calc(28px*var(--ui-scale))] top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500" aria-hidden="true">
-          <ChevronDown className={`w-[calc(28px*var(--ui-scale))] h-[calc(28px*var(--ui-scale))] transition-transform ${open ? 'rotate-180' : ''}`} />
+        <div className="absolute right-[calc(20px*var(--ui-scale))] top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-500" aria-hidden="true">
+          <ChevronDown className={`w-[calc(22px*var(--ui-scale))] h-[calc(22px*var(--ui-scale))] transition-transform ${open ? 'rotate-180' : ''}`} />
         </div>
 
         {open && (
@@ -96,7 +96,7 @@ const Select = ({
             role="listbox"
             tabIndex={-1}
             aria-labelledby={selectId}
-            className="absolute z-20 mt-2 w-full max-h-[60vh] overflow-y-auto bg-white border-2 border-gray-300 rounded-[calc(28px*var(--ui-scale))] shadow-kiosk-hover"
+            className="absolute z-20 mt-2 w-full max-h-[60vh] overflow-y-auto bg-white border-2 border-gray-300 rounded-[calc(20px*var(--ui-scale))] shadow-kiosk-hover"
           >
             {options.map((option) => {
               const optionValue = option.value ?? option.id;
@@ -108,7 +108,7 @@ const Select = ({
                   aria-selected={isSelected}
                   onClick={() => selectOption(optionValue)}
                   className={`
-                    px-[calc(42px*var(--ui-scale))] py-[calc(20px*var(--ui-scale))] text-kiosk-2xl cursor-pointer touch-manipulation
+                    px-[calc(28px*var(--ui-scale))] py-[calc(16px*var(--ui-scale))] text-kiosk-base leading-snug break-words cursor-pointer touch-manipulation
                     ${isSelected ? 'bg-blue-50 text-government-blue font-semibold' : 'text-gray-800 hover:bg-gray-50'}
                   `}
                 >

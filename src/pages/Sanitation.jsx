@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal } from '../components';
+import { Modal, Select } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
@@ -239,7 +239,7 @@ const Sanitation = () => {
           <button
             type="button"
             className="btn btn-quiet"
-            style={{ alignSelf: 'center', fontSize: 22, padding: '18px 48px' }}
+            style={{ alignSelf: 'center' }}
             onClick={() => navigate('/home')}
           >
             <I d={ic.back} size={24} /> {t('home.backToOrgs', 'Back to Organizations')}
@@ -284,26 +284,37 @@ const Sanitation = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 40, marginTop: 36 }}>
               <div>
                 <label className="flab">{t('form.state')} *</label>
-                <select className="field" value={formData.state} onChange={(e) => handleInputChange('state', e.target.value)} required>
-                  <option value="">{t('form.selectState')}</option>
-                  {states.map(s => <option key={s.id} value={s.id}>{getLocalizedName(s)}</option>)}
-                </select>
+                <Select
+                  value={formData.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  placeholder={t('form.selectState')}
+                  options={states.map(s => ({ value: s.id, label: getLocalizedName(s) }))}
+                  required
+                />
                 {errors.state && <div className="meta" style={{ color: 'var(--err)' }}>{errors.state}</div>}
               </div>
               <div>
                 <label className="flab">{t('form.city')} *</label>
-                <select className="field" value={formData.city} onChange={(e) => handleInputChange('city', e.target.value)} disabled={!formData.state} required>
-                  <option value="">{t('form.selectCity')}</option>
-                  {availableCities.map(c => <option key={c.id} value={c.id}>{getLocalizedName(c)}</option>)}
-                </select>
+                <Select
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder={t('form.selectCity')}
+                  options={availableCities.map(c => ({ value: c.id, label: getLocalizedName(c) }))}
+                  disabled={!formData.state}
+                  required
+                />
                 {errors.city && <div className="meta" style={{ color: 'var(--err)' }}>{errors.city}</div>}
               </div>
               <div>
                 <label className="flab">{t('form.ward')} *</label>
-                <select className="field" value={formData.ward} onChange={(e) => handleInputChange('ward', e.target.value)} disabled={!formData.city} required>
-                  <option value="">{t('form.selectWard')}</option>
-                  {availableWards.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                </select>
+                <Select
+                  value={formData.ward}
+                  onChange={(e) => handleInputChange('ward', e.target.value)}
+                  placeholder={t('form.selectWard')}
+                  options={availableWards.map(w => ({ value: w.id, label: w.name }))}
+                  disabled={!formData.city}
+                  required
+                />
                 {errors.ward && <div className="meta" style={{ color: 'var(--err)' }}>{errors.ward}</div>}
               </div>
             </div>

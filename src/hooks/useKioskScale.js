@@ -30,9 +30,13 @@ export default function useKioskScale() {
     };
     apply();
     window.addEventListener('resize', apply);
+    // Don't clear --kiosk-scale on unmount: the Attract overlay and the page
+    // underneath it both call this hook concurrently (overlay sits on top
+    // without unmounting the page). Clearing it here on the overlay's
+    // unmount would strip the var out from under the still-mounted page,
+    // which never reapplies it since its own mount effect already ran.
     return () => {
       window.removeEventListener('resize', apply);
-      document.documentElement.style.removeProperty('--kiosk-scale');
     };
   }, []);
 }

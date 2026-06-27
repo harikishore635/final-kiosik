@@ -182,7 +182,7 @@ export default function VK({
   };
 
   const helpActions = [
-    { icon: ic.type, label: t('vk.largerText'), run: toggleLarger },
+    { icon: ic.type, label: t('vk.largerText').replace(/^A\+\s*/, ''), run: toggleLarger },
     { icon: ic.voice, label: t('vk.voiceMode'), run: openVoice },
     { icon: ic.chat, label: t('vk.aiChat'), run: openChat },
     { icon: ic.sos, label: t('vk.emergency'), run: openEmergency },
@@ -223,13 +223,13 @@ export default function VK({
       <div className="vk-strip" />
       <div className="vk-top">
         <div className="vk-brand">
-          <div className="mk"><Logo size={32} /></div>
+          <div className="mk"><Logo size={84} /></div>
           <div>
             <div className="nm">SUVIDHA</div>
             <div className="sub">{t('app.brandSubtitle')}</div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center' }}>
           <button
             type="button"
             className="chip"
@@ -270,7 +270,7 @@ export default function VK({
       {showBottom && (
         <div className="vk-bottom">
           <button type="button" className="btn btn-quiet" onClick={toggleLarger}>
-            <I d={ic.type} size={22} /> {t('vk.largerText')}
+            <I d={ic.type} size={22} /> {t('vk.largerText').replace(/^A\+\s*/, '')}
           </button>
           <button type="button" className="btn btn-quiet" onClick={openVoice}>
             <I d={ic.voice} size={22} /> {t('vk.voiceMode')}
