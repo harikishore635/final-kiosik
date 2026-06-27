@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal, Select } from '../components';
+import { Modal, Select, ApplicantBanner } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen } from '../components/loading';
 import { states } from '../utils/constants';
 import { schemeAPI, api } from '../utils/apiService';
 import { getSarvamLangCode } from '../utils/languageConfig';
 import { mockDelayRange } from '../utils/mockDelay';
+import { getActiveApplicant, buildSchemePrefill } from '../utils/citizenProfile';
 
 const mockSchemes = [
   {
@@ -375,6 +376,7 @@ const SchemeDiscovery = () => {
     income: '',
     category: '',
     occupation: '',
+    ...buildSchemePrefill(getActiveApplicant()),
   });
   const [results, setResults] = useState([]);
   const [selectedScheme, setSelectedScheme] = useState(null);
@@ -625,6 +627,7 @@ const SchemeDiscovery = () => {
           </div>
 
           <div className="card">
+            <ApplicantBanner />
             <h2 className="h3" style={{ marginBottom: 12 }}>
               {t('schemes.enterProfile', 'Enter Your Profile')}
             </h2>

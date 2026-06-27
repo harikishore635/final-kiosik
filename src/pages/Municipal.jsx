@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal, Select } from '../components';
+import { Modal, Select, ApplicantBanner } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
@@ -10,6 +10,7 @@ import { generateRequestId, getCurrentTimestamp } from '../utils/helpers';
 import { addReceipt } from '../utils/receipts';
 import { serviceAPI } from '../utils/apiService';
 import { sleep } from '../utils/mockDelay';
+import { getActiveApplicant, buildFormPrefill, clearActiveApplicant } from '../utils/citizenProfile';
 
 /**
  * Municipal Corporation Services page
@@ -39,9 +40,11 @@ const Municipal = () => {
 
     setIsDeepLinkedCategory(false);
   }, [searchParams]);
+  const applicant = getActiveApplicant();
+  const prefill = buildFormPrefill(applicant);
   const [formData, setFormData] = useState({
     name: '',
-    mobile: sessionStorage.getItem('userMobile') || '',
+    mobile: '',
     email: '',
     propertyId: '',
     aadhaarLast4: '',
@@ -49,6 +52,7 @@ const Municipal = () => {
     city: '',
     ward: '',
     address: '',
+    ...prefill,
     description: '',
   });
   const [files, setFiles] = useState([]);
@@ -160,7 +164,7 @@ const Municipal = () => {
           ward: formData.ward,
           address: formData.address,
           description: formData.description,
-          aadhaarUid: sessionStorage.getItem('aadhaarUid'),
+          aadhaarUid: applicant?.uid || sessionStorage.getItem('aadhaarUid'),
         });
         requestId = result.requestId;
       } catch {
@@ -182,6 +186,7 @@ const Municipal = () => {
       };
 
       addReceipt(receiptData);
+      clearActiveApplicant(); // next flow starts as self
       navigate(`/receipt?org=${encodeURIComponent(receiptData.serviceType)}&id=${encodeURIComponent(receiptData.requestId)}`);
     } catch (error) {
       console.error('Submission error:', error);
@@ -285,6 +290,7 @@ const Municipal = () => {
           </>
         ) : (
           <div className="card">
+            <ApplicantBanner />
             <span className="badge b-info" style={{ marginBottom: 44 }}>
               Selected · {t(`municipal.${selectedCategory}`)}
             </span>

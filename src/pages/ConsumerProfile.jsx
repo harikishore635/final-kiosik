@@ -12,6 +12,7 @@ import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import { generateRequestId, getCurrentTimestamp } from '../utils/helpers';
 import { addReceipt } from '../utils/receipts';
 import { sleep } from '../utils/mockDelay';
+import { getCitizenProfile, buildFormPrefill } from '../utils/citizenProfile';
 
 /**
  * Consumer Profile / Credential Management — shared across all departments
@@ -30,13 +31,15 @@ const ConsumerProfile = () => {
   };
   const theme = themeColors[org] || themeColors.electricity;
 
-  // Mock profile data
+  // Profile data — prefilled from the logged-in citizen's Aadhaar record
+  const citizen = getCitizenProfile();
+  const citizenPrefill = buildFormPrefill(citizen);
   const [profileData, setProfileData] = useState({
-    name: sessionStorage.getItem('userName') || 'Rajesh Kumar',
-    mobile: sessionStorage.getItem('userMobile') || '9876543210',
-    email: 'rajesh.k@email.com',
-    address: '42, MG Road, Ward 3',
-    aadhaar: '9999-8888-7777',
+    name: citizenPrefill.name || sessionStorage.getItem('userName') || 'Rajesh Kumar',
+    mobile: citizenPrefill.mobile || sessionStorage.getItem('userMobile') || '9876543210',
+    email: citizenPrefill.email || 'rajesh.k@email.com',
+    address: citizenPrefill.address || '42, MG Road, Ward 3',
+    aadhaar: citizen?.uid ? `${citizen.uid.slice(0, 4)}-${citizen.uid.slice(4, 8)}-${citizen.uid.slice(8, 12)}` : '9999-8888-7777',
     consumerNumber: 'ELEC-GHY-2024-001234',
   });
 

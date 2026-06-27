@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal, Select } from '../components';
+import { Modal, Select, ApplicantBanner } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
@@ -10,6 +10,7 @@ import { generateRequestId, getCurrentTimestamp } from '../utils/helpers';
 import { addReceipt } from '../utils/receipts';
 import { serviceAPI } from '../utils/apiService';
 import { sleep } from '../utils/mockDelay';
+import { getActiveApplicant, buildFormPrefill, clearActiveApplicant } from '../utils/citizenProfile';
 
 const Sanitation = () => {
   const { t, i18n } = useTranslation();
@@ -17,14 +18,17 @@ const Sanitation = () => {
 
   const [step, setStep] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const applicant = getActiveApplicant();
+  const prefill = buildFormPrefill(applicant);
   const [formData, setFormData] = useState({
     name: '',
-    mobile: sessionStorage.getItem('userMobile') || '',
+    mobile: '',
     email: '',
     state: '',
     city: '',
     ward: '',
     address: '',
+    ...prefill,
     description: '',
     preferredDate: '',
     preferredTime: '',
@@ -135,7 +139,7 @@ const Sanitation = () => {
           description: formData.description,
           preferredDate: formData.preferredDate,
           preferredTime: formData.preferredTime,
-          aadhaarUid: sessionStorage.getItem('aadhaarUid'),
+          aadhaarUid: applicant?.uid || sessionStorage.getItem('aadhaarUid'),
         });
         requestId = result.requestId;
       } catch {
@@ -155,6 +159,7 @@ const Sanitation = () => {
         status: 'submitted',
       };
       addReceipt(receiptData);
+      clearActiveApplicant(); // next flow starts as self
       navigate(`/receipt?org=${encodeURIComponent(receiptData.serviceType)}&id=${encodeURIComponent(receiptData.requestId)}`);
     } catch (error) {
       console.error('Submission error:', error);
@@ -259,6 +264,7 @@ const Sanitation = () => {
           </div>
 
           <div className="card">
+            <ApplicantBanner />
             <span className="badge b-info" style={{ marginBottom: 44 }}>
               Selected · {t(`sanitation.${selectedCategory}`)}
             </span>

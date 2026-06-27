@@ -36,6 +36,7 @@ const clearAuthSession = () => {
   sessionStorage.removeItem('adminDashboardPath');
   sessionStorage.removeItem('autoDetectedMode');
   sessionStorage.removeItem('userAge');
+  sessionStorage.removeItem('activeApplicant');
 };
 
 const writeSessionFromCitizen = ({ citizen, token, authMethod = 'phone_otp_sms' }) => {

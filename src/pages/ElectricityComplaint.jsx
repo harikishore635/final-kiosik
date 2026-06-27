@@ -22,6 +22,7 @@ import {
   Select,
   TextArea,
   Modal,
+  ApplicantBanner,
 } from '../components';
 import { VK } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
@@ -31,6 +32,7 @@ import { generateComplaintId, getCurrentTimestamp } from '../utils/helpers';
 import { addReceipt } from '../utils/receipts';
 import { serviceAPI } from '../utils/apiService';
 import { sleep } from '../utils/mockDelay';
+import { getActiveApplicant, buildFormPrefill, clearActiveApplicant } from '../utils/citizenProfile';
 
 /**
  * Electricity Complaint Registration — dedicated page with SRS-defined categories
@@ -41,15 +43,18 @@ const ElectricityComplaint = () => {
 
   const [step, setStep] = useState(1); // 1: category, 2: form
   const [selectedCategory, setSelectedCategory] = useState('');
+  const applicant = getActiveApplicant();
+  const prefill = buildFormPrefill(applicant);
   const [formData, setFormData] = useState({
-    name: sessionStorage.getItem('userName') || '',
-    mobile: sessionStorage.getItem('userMobile') || '',
+    name: '',
+    mobile: '',
     email: '',
     consumerNumber: '',
     state: '',
     city: '',
     ward: '',
     address: '',
+    ...prefill,
     description: '',
     // Incorrect bill fields
     billMonth: '',
@@ -177,7 +182,7 @@ const ElectricityComplaint = () => {
           ward: formData.ward,
           address: formData.address,
           description: formData.description,
-          aadhaarUid: sessionStorage.getItem('aadhaarUid'),
+          aadhaarUid: applicant?.uid || sessionStorage.getItem('aadhaarUid'),
         });
         ticketId = result.requestId;
       } catch {
@@ -199,6 +204,7 @@ const ElectricityComplaint = () => {
       };
 
       addReceipt(receiptData);
+      clearActiveApplicant(); // next flow starts as self
       navigate(`/receipt?org=${encodeURIComponent(receiptData.serviceType)}&id=${encodeURIComponent(receiptData.requestId)}`);
     } catch (error) {
       console.error('Complaint submission error:', error);
@@ -300,6 +306,7 @@ const ElectricityComplaint = () => {
           </div>
         ) : (
           <div className="bg-white rounded-kiosk-lg shadow-kiosk p-6 md:p-8">
+            <ApplicantBanner />
             {/* Selected Category Banner */}
             <div className="mb-6 p-4 bg-amber-50 rounded-kiosk border border-amber-200">
               <p className="text-kiosk-base font-semibold text-amber-800">

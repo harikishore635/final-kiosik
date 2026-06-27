@@ -10,6 +10,7 @@ import {
   Select,
   TextArea,
   Modal,
+  ApplicantBanner,
 } from '../components';
 import { VK } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
@@ -19,6 +20,7 @@ import { generateRequestId, getCurrentTimestamp } from '../utils/helpers';
 import { addReceipt } from '../utils/receipts';
 import { serviceAPI } from '../utils/apiService';
 import { sleep } from '../utils/mockDelay';
+import { getActiveApplicant, buildFormPrefill, clearActiveApplicant } from '../utils/citizenProfile';
 
 /**
  * Electricity Services page
@@ -47,9 +49,11 @@ const Electricity = () => {
 
     setIsDeepLinkedCategory(false);
   }, [searchParams]);
+  const applicant = getActiveApplicant();
+  const prefill = buildFormPrefill(applicant);
   const [formData, setFormData] = useState({
     name: '',
-    mobile: sessionStorage.getItem('userMobile') || '',
+    mobile: '',
     email: '',
     consumerNumber: '',
     meterNumber: '',
@@ -57,6 +61,7 @@ const Electricity = () => {
     city: '',
     ward: '',
     address: '',
+    ...prefill,
     description: '',
   });
   const [files, setFiles] = useState([]);
@@ -147,7 +152,7 @@ const Electricity = () => {
           ward: formData.ward,
           address: formData.address,
           description: formData.description,
-          aadhaarUid: sessionStorage.getItem('aadhaarUid'),
+          aadhaarUid: applicant?.uid || sessionStorage.getItem('aadhaarUid'),
         });
         requestId = result.requestId;
       } catch {
@@ -170,6 +175,7 @@ const Electricity = () => {
 
       // Store receipt data and navigate
       addReceipt(receiptData);
+      clearActiveApplicant(); // next flow starts as self
       navigate(`/receipt?org=${encodeURIComponent(receiptData.serviceType)}&id=${encodeURIComponent(receiptData.requestId)}`);
     } catch (error) {
       console.error('Submission error:', error);
@@ -269,6 +275,7 @@ const Electricity = () => {
         ) : (
           /* Step 2: Request Form */
           <div className="bg-white rounded-kiosk-lg shadow-kiosk p-6 md:p-8">
+            <ApplicantBanner />
             <div className="mb-6 p-4 bg-yellow-50 rounded-kiosk border border-yellow-200">
               <p className="text-kiosk-base font-semibold text-yellow-800">
                 Selected: {t(`electricity.${selectedCategory}`)}

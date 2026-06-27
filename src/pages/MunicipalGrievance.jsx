@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { startSTT, stopSTT } from '../ai/voice/speechRecognition';
 import { useVoiceFormSubmit } from '../hooks/useVoiceFormSubmit';
-import { Modal, Select } from '../components';
+import { Modal, Select, ApplicantBanner } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
@@ -12,6 +12,7 @@ import { generateComplaintId, getCurrentTimestamp } from '../utils/helpers';
 import { serviceAPI } from '../utils/apiService';
 import { addReceipt } from '../utils/receipts';
 import { sleep } from '../utils/mockDelay';
+import { getActiveApplicant, buildFormPrefill, clearActiveApplicant } from '../utils/citizenProfile';
 
 /**
  * Municipal Grievance Registration — 8 SRS-defined categories
@@ -22,13 +23,16 @@ const MunicipalGrievance = () => {
 
   const [step, setStep] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const applicant = getActiveApplicant();
+  const prefill = buildFormPrefill(applicant);
   const [formData, setFormData] = useState({
-    name: sessionStorage.getItem('userName') || '',
-    mobile: sessionStorage.getItem('userMobile') || '',
+    name: '',
+    mobile: '',
     email: '',
     state: '',
     city: '',
     ward: '',
+    ...prefill,
     specificLocation: '',
     description: '',
   });
@@ -126,7 +130,7 @@ const MunicipalGrievance = () => {
           ward: formData.ward,
           address: formData.specificLocation,
           description: formData.description,
-          aadhaarUid: sessionStorage.getItem('aadhaarUid'),
+          aadhaarUid: applicant?.uid || sessionStorage.getItem('aadhaarUid'),
         });
         ticketId = result.requestId;
       } catch {
@@ -149,6 +153,7 @@ const MunicipalGrievance = () => {
       };
 
       addReceipt(receiptData);
+      clearActiveApplicant(); // next flow starts as self
       navigate(`/receipt?org=${encodeURIComponent(receiptData.serviceType)}&id=${encodeURIComponent(receiptData.requestId)}`);
     } catch (error) {
       console.error('Municipal grievance error:', error);
@@ -238,6 +243,7 @@ const MunicipalGrievance = () => {
           </div>
         ) : (
           <div className="card">
+            <ApplicantBanner />
             <span className="badge b-info" style={{ marginBottom: 44 }}>
               Category · {grievanceCategories.find(c => c.id === selectedCategory)?.label}
             </span>

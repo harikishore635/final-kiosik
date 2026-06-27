@@ -23,6 +23,7 @@ export { default as QRUploadComponent } from './QRUpload';
 export { default as SendToPhone } from './SendToPhone';
 export { default as GuestGate } from './GuestGate';
 export { default as DependentCard } from './DependentCard';
+export { default as ApplicantBanner } from './ApplicantBanner';
 export { default as FilePreviewModal } from './FilePreviewModal';
 export { default as RealtimeNavigationMap } from './RealtimeNavigationMap';
 export {

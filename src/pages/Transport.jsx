@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal, Select } from '../components';
+import { Modal, Select, ApplicantBanner } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import UpiPaymentScreen from '../components/payment/UpiPaymentScreen';
@@ -12,6 +12,7 @@ import { generateRequestId, getCurrentTimestamp } from '../utils/helpers';
 import { serviceAPI, transportAPI } from '../utils/apiService';
 import { addReceipt } from '../utils/receipts';
 import { sleep } from '../utils/mockDelay';
+import { getActiveApplicant, buildFormPrefill, clearActiveApplicant } from '../utils/citizenProfile';
 
 // Mock station/route data
 const metroStations = [
@@ -50,6 +51,9 @@ const Transport = () => {
   const [step, setStep] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('');
 
+  const applicant = getActiveApplicant();
+  const prefill = buildFormPrefill(applicant);
+
   const [bookingData, setBookingData] = useState({
     fromStation: '',
     toStation: '',
@@ -59,13 +63,13 @@ const Transport = () => {
     busRoute: '',
     trainClass: 'second',
     passType: '',
-    passengerName: sessionStorage.getItem('userName') || '',
-    passengerMobile: sessionStorage.getItem('userMobile') || '',
+    passengerName: prefill.name || '',
+    passengerMobile: prefill.mobile || '',
   });
 
   const [formData, setFormData] = useState({
-    name: sessionStorage.getItem('userName') || '',
-    mobile: sessionStorage.getItem('userMobile') || '',
+    name: '',
+    mobile: '',
     email: '',
     vehicleNumber: '',
     licenseNumber: '',
@@ -73,6 +77,7 @@ const Transport = () => {
     city: '',
     ward: '',
     address: '',
+    ...prefill,
     description: '',
   });
   const [files, setFiles] = useState([]);
@@ -262,13 +267,14 @@ const Transport = () => {
         ownerName: bookingData.passengerName,
         mobile: bookingData.passengerMobile,
         ownerMobile: bookingData.passengerMobile,
-        ownerAadhaar: sessionStorage.getItem('aadhaarUid') || '',
+        ownerAadhaar: applicant?.uid || sessionStorage.getItem('aadhaarUid') || '',
         serviceType: 'transport',
         serviceCategory: `Ticket Booking - ${selectedCategory}`,
         timestamp: getCurrentTimestamp(),
         status: 'confirmed',
         fare: `₹${fare}`,
       });
+      clearActiveApplicant(); // next flow starts as self
       // Payment confirmed -> ticket issued -> go to receipt and auto-print it.
       navigate(`/receipt?org=transport&id=${encodeURIComponent(ticketId)}&autoprint=1`);
     } catch (error) {
@@ -307,7 +313,7 @@ const Transport = () => {
           ward: formData.ward,
           address: formData.address,
           description: formData.description,
-          aadhaarUid: sessionStorage.getItem('aadhaarUid'),
+          aadhaarUid: applicant?.uid || sessionStorage.getItem('aadhaarUid'),
         });
         requestId = result.requestId;
       } catch {
@@ -327,6 +333,7 @@ const Transport = () => {
         status: 'submitted',
       };
       addReceipt(receiptData);
+      clearActiveApplicant(); // next flow starts as self
       navigate(`/receipt?org=${encodeURIComponent(receiptData.serviceType)}&id=${encodeURIComponent(receiptData.requestId)}`);
     } catch (error) {
       console.error('Submission error:', error);
@@ -499,6 +506,7 @@ const Transport = () => {
           </div>
 
           <div className="card">
+            <ApplicantBanner />
             <span className="badge b-info" style={{ marginBottom: 36 }}>
               {t('transport.bookingLabel')} · {t(`transport.${selectedCategory}`)}
             </span>
@@ -654,6 +662,7 @@ const Transport = () => {
           </div>
 
           <div className="card">
+            <ApplicantBanner />
             <span className="badge b-warn" style={{ marginBottom: 36 }}>
               {t('transport.reportingLabel')} · {t(`transport.${selectedCategory}`)}
             </span>

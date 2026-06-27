@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Modal, Select } from '../components';
+import { Modal, Select, ApplicantBanner } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
@@ -10,6 +10,7 @@ import { generateRequestId, getCurrentTimestamp } from '../utils/helpers';
 import { addReceipt } from '../utils/receipts';
 import { serviceAPI } from '../utils/apiService';
 import { sleep } from '../utils/mockDelay';
+import { getActiveApplicant, buildFormPrefill, clearActiveApplicant } from '../utils/citizenProfile';
 
 const Healthcare = () => {
   const { t, i18n } = useTranslation();
@@ -17,9 +18,11 @@ const Healthcare = () => {
 
   const [step, setStep] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const applicant = getActiveApplicant();
+  const prefill = buildFormPrefill(applicant);
   const [formData, setFormData] = useState({
     name: '',
-    mobile: sessionStorage.getItem('userMobile') || '',
+    mobile: '',
     email: '',
     healthCardNumber: '',
     aadhaarLast4: '',
@@ -27,6 +30,7 @@ const Healthcare = () => {
     city: '',
     ward: '',
     address: '',
+    ...prefill,
     description: '',
   });
   const [files, setFiles] = useState([]);
@@ -134,7 +138,7 @@ const Healthcare = () => {
           ward: formData.ward,
           address: formData.address,
           description: formData.description,
-          aadhaarUid: sessionStorage.getItem('aadhaarUid'),
+          aadhaarUid: applicant?.uid || sessionStorage.getItem('aadhaarUid'),
         });
         requestId = result.requestId;
       } catch {
@@ -154,6 +158,7 @@ const Healthcare = () => {
         status: 'submitted',
       };
       addReceipt(receiptData);
+      clearActiveApplicant(); // next flow starts as self
       navigate(`/receipt?org=${encodeURIComponent(receiptData.serviceType)}&id=${encodeURIComponent(receiptData.requestId)}`);
     } catch (error) {
       console.error('Submission error:', error);
@@ -258,6 +263,7 @@ const Healthcare = () => {
           </div>
 
           <div className="card">
+            <ApplicantBanner />
             <span className="badge b-info" style={{ marginBottom: 44 }}>
               Selected · {t(`healthcare.${selectedCategory}`)}
             </span>

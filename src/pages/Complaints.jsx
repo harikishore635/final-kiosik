@@ -9,6 +9,7 @@ import {
   Select,
   TextArea,
   Modal,
+  ApplicantBanner,
 } from '../components';
 import { VK } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
@@ -17,6 +18,7 @@ import { generateComplaintId, getCurrentTimestamp } from '../utils/helpers';
 import { complaintAPI } from '../utils/apiService';
 import { addReceipt } from '../utils/receipts';
 import { sleep } from '../utils/mockDelay';
+import { getActiveApplicant, buildFormPrefill, clearActiveApplicant } from '../utils/citizenProfile';
 
 /**
  * Complaints Registration page
@@ -29,13 +31,16 @@ const Complaints = () => {
 
   const [step, setStep] = useState(1);
   const [selectedType, setSelectedType] = useState('');
+  const applicant = getActiveApplicant();
+  const prefill = buildFormPrefill(applicant);
   const [formData, setFormData] = useState({
     name: '',
-    mobile: sessionStorage.getItem('userMobile') || '',
+    mobile: '',
     email: '',
     state: '',
     city: '',
     ward: '',
+    ...prefill,
     location: '',
     description: '',
   });
@@ -168,7 +173,7 @@ const Complaints = () => {
           ward: formData.ward,
           location: formData.location,
           description: formData.description,
-          aadhaarUid: sessionStorage.getItem('aadhaarUid'),
+          aadhaarUid: applicant?.uid || sessionStorage.getItem('aadhaarUid'),
         });
         complaintId = result.complaintId;
       } catch {
@@ -189,6 +194,7 @@ const Complaints = () => {
       };
 
       addReceipt(receiptData);
+      clearActiveApplicant(); // next flow starts as self
       navigate(`/receipt?org=${encodeURIComponent(receiptData.serviceType)}&id=${encodeURIComponent(receiptData.requestId)}`);
     } catch (error) {
       console.error('Submission error:', error);
@@ -284,6 +290,7 @@ const Complaints = () => {
           </div>
         ) : (
           <div className="bg-white rounded-kiosk-lg shadow-kiosk p-6 md:p-8">
+            <ApplicantBanner />
             <div className="mb-6 p-4 bg-purple-50 rounded-kiosk border border-purple-200">
               <p className="text-kiosk-base font-semibold text-purple-800">
                 Complaint Type: {t(`complaints.${selectedType}`)}

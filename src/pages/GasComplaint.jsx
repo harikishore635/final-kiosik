@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { startSTT, stopSTT } from '../ai/voice/speechRecognition';
 import { useVoiceFormSubmit } from '../hooks/useVoiceFormSubmit';
-import { Modal, Select } from '../components';
+import { Modal, Select, ApplicantBanner } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
@@ -12,6 +12,7 @@ import { generateComplaintId, getCurrentTimestamp } from '../utils/helpers';
 import { addReceipt } from '../utils/receipts';
 import { serviceAPI } from '../utils/apiService';
 import { sleep } from '../utils/mockDelay';
+import { getActiveApplicant, buildFormPrefill, clearActiveApplicant } from '../utils/citizenProfile';
 
 /**
  * Gas Complaint Registration — with voice input support (SRS requirement)
@@ -33,15 +34,18 @@ const GasComplaint = () => {
 
   const selectedCategoryData = gasComplaintCategories.find(c => c.id === selectedCategory);
 
+  const applicant = getActiveApplicant();
+  const prefill = buildFormPrefill(applicant);
   const [formData, setFormData] = useState({
-    name: sessionStorage.getItem('userName') || '',
-    mobile: sessionStorage.getItem('userMobile') || '',
+    name: '',
+    mobile: '',
     email: '',
     caNumber: '',
     state: '',
     city: '',
     ward: '',
     address: '',
+    ...prefill,
     description: '',
   });
   const [files, setFiles] = useState([]);
@@ -132,7 +136,7 @@ const GasComplaint = () => {
           ward: formData.ward,
           address: formData.address,
           description: formData.description,
-          aadhaarUid: sessionStorage.getItem('aadhaarUid'),
+          aadhaarUid: applicant?.uid || sessionStorage.getItem('aadhaarUid'),
         });
         ticketId = result.requestId;
       } catch {
@@ -154,6 +158,7 @@ const GasComplaint = () => {
       };
 
       addReceipt(receiptData);
+      clearActiveApplicant(); // next flow starts as self
       navigate(`/receipt?org=${encodeURIComponent(receiptData.serviceType)}&id=${encodeURIComponent(receiptData.requestId)}`);
     } catch (error) {
       console.error('Gas complaint error:', error);
@@ -249,6 +254,7 @@ const GasComplaint = () => {
         {/* Step 2 — Form */}
         {step === 2 && (
         <div className="card">
+          <ApplicantBanner />
           {/* SLA Banner */}
           <div style={{ marginBottom: 36, padding: 24, borderRadius: 18, background: 'color-mix(in oklab, var(--err) 10%, white)', border: '1.5px solid color-mix(in oklab, var(--err) 30%, white)' }}>
             <div className="body" style={{ fontWeight: 700, color: 'var(--err)' }}>

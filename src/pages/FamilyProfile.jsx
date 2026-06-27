@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Modal, Select } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
+import { setActiveApplicant } from '../utils/citizenProfile';
 
 const FamilyProfile = () => {
   const { t, i18n } = useTranslation();
@@ -124,6 +125,13 @@ const FamilyProfile = () => {
   };
 
   const handleRemove = (id) => { setDeleteTargetId(id); setShowDeleteModal(true); };
+
+  // Set this dependant as the active applicant, then go to the service hub.
+  // Every form will auto-fill for the dependant (contact/address inherited from primary).
+  const handleApplyFor = (dep) => {
+    setActiveApplicant(dep.id);
+    navigate('/home');
+  };
 
   const confirmRemove = () => {
     setDependents((prev) => prev.filter((d) => d.id !== deleteTargetId));
@@ -336,6 +344,7 @@ const FamilyProfile = () => {
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: 18 }}>
+                          <button className="chip" style={{ color: 'var(--indigo-700)', fontWeight: 700 }} onClick={() => handleApplyFor(dep)}>{t('familyProfile.applyForService', 'Apply for service')}</button>
                           <button className="chip" onClick={() => handleEdit(dep)}>Edit</button>
                           <button className="chip" style={{ color: 'var(--err)' }} onClick={() => handleRemove(dep.id)}>Remove</button>
                         </div>
@@ -360,6 +369,7 @@ const FamilyProfile = () => {
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: 18 }}>
+                          <button className="chip" style={{ color: 'var(--indigo-700)', fontWeight: 700 }} onClick={() => handleApplyFor(dep)}>{t('familyProfile.applyForService', 'Apply for service')}</button>
                           <button className="chip" onClick={() => handleEdit(dep)}>Edit</button>
                           <button className="chip" style={{ color: 'var(--err)' }} onClick={() => handleRemove(dep.id)}>Remove</button>
                         </div>
