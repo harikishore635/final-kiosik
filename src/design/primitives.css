@@ -44,6 +44,26 @@ body:has(.kiosk-stage) #root {
   margin-bottom: calc(3840px * (var(--kiosk-scale, 1) - 1));
 }
 
+/* ── Toast viewport ──────────────────────────────────────────────────
+   Lives inside .kiosk-stage so it scales with --kiosk-scale and stays
+   inside the vertical kiosk UI instead of pinning to the real browser
+   viewport corner.
+   ────────────────────────────────────────────────────────────────── */
+.vk-toast-viewport {
+  position: absolute;
+  top: 64px;
+  right: 64px;
+  z-index: 10000;
+  width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  pointer-events: none;
+}
+.vk-toast-viewport > * {
+  pointer-events: auto;
+}
+
 /* ── Shell ───────────────────────────────────────────────────────── */
 .vk {
   width: 2160px;
@@ -63,7 +83,7 @@ body:has(.kiosk-stage) #root {
 }
 
 .vk-strip {
-  height: 20px;
+  height: calc(20px * var(--ui-scale));
   background: linear-gradient(90deg,
     #FF9933 0 33.33%,
     white 33.33% 66.66%,
@@ -72,46 +92,46 @@ body:has(.kiosk-stage) #root {
 }
 
 .vk-top {
-  padding: 56px 112px 36px;
+  padding: calc(56px * var(--ui-scale)) calc(112px * var(--ui-scale)) calc(36px * var(--ui-scale));
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-  gap: 36px;
+  gap: calc(36px * var(--ui-scale));
 }
 
 .vk-brand {
   display: flex;
   align-items: center;
-  gap: 36px;
+  gap: calc(36px * var(--ui-scale));
 }
 .vk-brand .mk {
-  width: 128px;
-  height: 128px;
-  border-radius: 36px;
+  width: calc(128px * var(--ui-scale));
+  height: calc(128px * var(--ui-scale));
+  border-radius: calc(36px * var(--ui-scale));
   background: var(--indigo-700);
   display: grid;
   place-items: center;
 }
 .vk-brand .nm {
   font-weight: 800;
-  font-size: 56px;
+  font-size: calc(56px * var(--ui-scale));
   letter-spacing: -0.02em;
   color: var(--indigo-900);
   line-height: 1;
 }
 .vk-brand .sub {
   font-family: var(--font-mono);
-  font-size: 24px;
+  font-size: calc(24px * var(--ui-scale));
   letter-spacing: 0.12em;
   color: var(--ink-500);
   text-transform: uppercase;
-  margin-top: 10px;
+  margin-top: calc(10px * var(--ui-scale));
 }
 
 .vk-body {
   flex: 1;
-  padding: 48px 112px 220px;
+  padding: calc(48px * var(--ui-scale)) calc(112px * var(--ui-scale)) calc(220px * var(--ui-scale));
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
@@ -119,12 +139,12 @@ body:has(.kiosk-stage) #root {
 }
 
 .vk-bottom {
-  min-height: 180px;
-  padding: 34px 112px 42px;
+  min-height: calc(180px * var(--ui-scale));
+  padding: calc(34px * var(--ui-scale)) calc(112px * var(--ui-scale)) calc(42px * var(--ui-scale));
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 32px;
+  gap: calc(32px * var(--ui-scale));
   background: var(--surface-1);
   border-top: 1px solid var(--line);
   flex-shrink: 0;
@@ -132,41 +152,41 @@ body:has(.kiosk-stage) #root {
 
 /* ── Status row (weather/AQI/clock/connectivity) ─────────────────── */
 .vk-status {
-  padding: 0 112px 36px;
+  padding: 0 calc(112px * var(--ui-scale)) calc(36px * var(--ui-scale));
   display: flex;
-  gap: 24px;
+  gap: calc(24px * var(--ui-scale));
   align-items: stretch;
   flex-shrink: 0;
 }
 .stat {
   background: white;
   border: 1.5px solid var(--line);
-  border-radius: 28px;
-  padding: 28px 36px;
+  border-radius: calc(28px * var(--ui-scale));
+  padding: calc(28px * var(--ui-scale)) calc(36px * var(--ui-scale));
   display: flex;
   align-items: center;
-  gap: 24px;
-  min-height: 128px;
+  gap: calc(24px * var(--ui-scale));
+  min-height: calc(128px * var(--ui-scale));
   box-sizing: border-box;
 }
 .stat .lbl {
   font-family: var(--font-mono);
-  font-size: 20px;
+  font-size: calc(20px * var(--ui-scale));
   letter-spacing: 0.08em;
   color: var(--ink-500);
   text-transform: uppercase;
 }
 .stat .val {
   font-weight: 700;
-  font-size: 44px;
+  font-size: calc(44px * var(--ui-scale));
   color: var(--indigo-900);
   line-height: 1;
   letter-spacing: -0.01em;
 }
 .stat .ico {
-  width: 80px;
-  height: 80px;
-  border-radius: 24px;
+  width: calc(80px * var(--ui-scale));
+  height: calc(80px * var(--ui-scale));
+  border-radius: calc(24px * var(--ui-scale));
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -204,15 +224,15 @@ body:has(.kiosk-stage) #root {
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 16px;
-  padding: 26px 34px;
+  gap: calc(16px * var(--ui-scale));
+  padding: calc(26px * var(--ui-scale)) calc(34px * var(--ui-scale));
   border-radius: 999px;
   background: white;
   border: 1.5px solid var(--line);
-  font-size: 36px;
+  font-size: calc(36px * var(--ui-scale));
   font-weight: 500;
   color: var(--ink-700);
-  min-height: 120px;
+  min-height: calc(120px * var(--ui-scale));
   box-sizing: border-box;
   cursor: pointer;
   font-family: inherit;
@@ -229,16 +249,16 @@ body:has(.kiosk-stage) #root {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
-  border-radius: 32px;
-  padding: 30px 48px;
+  gap: calc(24px * var(--ui-scale));
+  border-radius: calc(32px * var(--ui-scale));
+  padding: calc(30px * var(--ui-scale)) calc(48px * var(--ui-scale));
   font-family: inherit;
   font-weight: 600;
-  font-size: 40px;
+  font-size: calc(40px * var(--ui-scale));
   border: none;
   cursor: pointer;
-  min-width: 160px;
-  min-height: 120px;
+  min-width: calc(160px * var(--ui-scale));
+  min-height: calc(120px * var(--ui-scale));
   box-sizing: border-box;
   transition: transform 0.12s, box-shadow 0.12s;
 }
@@ -267,23 +287,23 @@ body:has(.kiosk-stage) #root {
   font-weight: 700;
 }
 .btn-xl {
-  min-height: 160px;
-  font-size: 48px;
-  padding: 44px 72px;
-  border-radius: 40px;
+  min-height: calc(160px * var(--ui-scale));
+  font-size: calc(48px * var(--ui-scale));
+  padding: calc(44px * var(--ui-scale)) calc(72px * var(--ui-scale));
+  border-radius: calc(40px * var(--ui-scale));
 }
 
 /* ── Typography ──────────────────────────────────────────────────── */
 .label-tag {
   font-family: var(--font-mono);
-  font-size: 32px;
+  font-size: calc(32px * var(--ui-scale));
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--ink-500);
   font-weight: 500;
 }
 .h1 {
-  font-size: 128px;
+  font-size: calc(128px * var(--ui-scale));
   font-weight: 800;
   letter-spacing: -0.025em;
   line-height: 1.02;
@@ -292,7 +312,7 @@ body:has(.kiosk-stage) #root {
   text-wrap: balance;
 }
 .h2 {
-  font-size: 96px;
+  font-size: calc(96px * var(--ui-scale));
   font-weight: 800;
   letter-spacing: -0.022em;
   line-height: 1.05;
@@ -300,7 +320,7 @@ body:has(.kiosk-stage) #root {
   margin: 0;
 }
 .h3 {
-  font-size: 72px;
+  font-size: calc(72px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: -0.015em;
   line-height: 1.15;
@@ -308,17 +328,17 @@ body:has(.kiosk-stage) #root {
   margin: 0;
 }
 .body-l {
-  font-size: 40px;
+  font-size: calc(40px * var(--ui-scale));
   line-height: 1.5;
   color: var(--ink-700);
 }
 .body {
-  font-size: 36px;
+  font-size: calc(36px * var(--ui-scale));
   line-height: 1.5;
   color: var(--ink-700);
 }
 .meta {
-  font-size: 32px;
+  font-size: calc(32px * var(--ui-scale));
   color: var(--ink-500);
 }
 
@@ -327,7 +347,7 @@ body:has(.kiosk-stage) #root {
   background: white;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  padding: 64px;
+  padding: calc(64px * var(--ui-scale));
   box-shadow: var(--shadow-1);
 }
 
@@ -335,11 +355,11 @@ body:has(.kiosk-stage) #root {
   background: white;
   border: 1px solid var(--line);
   border-radius: var(--r-xl);
-  padding: 56px;
+  padding: calc(56px * var(--ui-scale));
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  min-height: 360px;
+  gap: calc(32px * var(--ui-scale));
+  min-height: calc(360px * var(--ui-scale));
   cursor: pointer;
   box-shadow: var(--shadow-1);
   transition: transform 0.15s, box-shadow 0.15s;
@@ -354,13 +374,13 @@ body:has(.kiosk-stage) #root {
 .tile:active { transform: scale(0.98); }
 .tile .nm {
   font-weight: 700;
-  font-size: 48px;
+  font-size: calc(48px * var(--ui-scale));
   color: var(--indigo-900);
   line-height: 1.15;
   letter-spacing: -0.01em;
 }
 .tile .sub {
-  font-size: 36px;
+  font-size: calc(36px * var(--ui-scale));
   color: var(--ink-500);
   line-height: 1.45;
 }
@@ -369,11 +389,11 @@ body:has(.kiosk-stage) #root {
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 16px;
-  padding: 18px 28px;
+  gap: calc(16px * var(--ui-scale));
+  padding: calc(18px * var(--ui-scale)) calc(28px * var(--ui-scale));
   border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 28px;
+  font-size: calc(28px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -387,13 +407,13 @@ body:has(.kiosk-stage) #root {
 .field {
   background: white;
   border: 2px solid var(--line);
-  border-radius: 28px;
-  padding: 34px 42px;
-  font-size: 40px;
+  border-radius: calc(28px * var(--ui-scale));
+  padding: calc(34px * var(--ui-scale)) calc(42px * var(--ui-scale));
+  font-size: calc(40px * var(--ui-scale));
   font-family: inherit;
   width: 100%;
   box-sizing: border-box;
-  min-height: 120px;
+  min-height: calc(120px * var(--ui-scale));
   color: var(--ink-900);
 }
 .field:focus {
@@ -405,19 +425,19 @@ body:has(.kiosk-stage) #root {
 .keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 32px;
+  gap: calc(32px * var(--ui-scale));
 }
 .keypad button {
   background: white;
   border: 2px solid var(--line);
-  border-radius: 34px;
+  border-radius: calc(34px * var(--ui-scale));
   padding: 0;
-  font-size: 72px;
+  font-size: calc(72px * var(--ui-scale));
   font-weight: 700;
   cursor: pointer;
   font-family: var(--font-mono);
   color: var(--indigo-900);
-  height: 160px;
+  height: calc(160px * var(--ui-scale));
   transition: transform 0.08s, background 0.08s;
 }
 .keypad button:active {
@@ -427,14 +447,14 @@ body:has(.kiosk-stage) #root {
 
 /* ── OTP cells ───────────────────────────────────────────────────── */
 .otp-cell {
-  width: 160px;
-  height: 180px;
-  border-radius: 28px;
+  width: calc(160px * var(--ui-scale));
+  height: calc(180px * var(--ui-scale));
+  border-radius: calc(28px * var(--ui-scale));
   border: 2px solid var(--line);
   background: white;
   display: grid;
   place-items: center;
-  font-size: 88px;
+  font-size: calc(88px * var(--ui-scale));
   font-weight: 800;
   color: var(--indigo-900);
   font-family: var(--font-mono);
@@ -448,37 +468,37 @@ body:has(.kiosk-stage) #root {
 .tl {
   display: flex;
   flex-direction: column;
-  gap: 44px;
+  gap: calc(44px * var(--ui-scale));
   position: relative;
-  padding-left: 8px;
+  padding-left: calc(8px * var(--ui-scale));
 }
 .tl::before {
   content: '';
   position: absolute;
-  left: 26px;
-  top: 24px;
-  bottom: 24px;
+  left: calc(26px * var(--ui-scale));
+  top: calc(24px * var(--ui-scale));
+  bottom: calc(24px * var(--ui-scale));
   width: 3px;
   background: var(--line);
   border-radius: 2px;
 }
 .tl-item {
   display: flex;
-  gap: 44px;
+  gap: calc(44px * var(--ui-scale));
   align-items: flex-start;
   position: relative;
   z-index: 1;
 }
 .tl-dot {
-  width: 96px;
-  height: 96px;
+  width: calc(96px * var(--ui-scale));
+  height: calc(96px * var(--ui-scale));
   border-radius: 50%;
   flex-shrink: 0;
   display: grid;
   place-items: center;
   background: white;
   border: 3px solid var(--line);
-  font-size: 36px;
+  font-size: calc(36px * var(--ui-scale));
   font-weight: 700;
   color: var(--ink-500);
 }
@@ -498,12 +518,12 @@ body:has(.kiosk-stage) #root {
 .receipt-row {
   display: flex;
   justify-content: space-between;
-  padding: 28px 0;
+  padding: calc(28px * var(--ui-scale)) 0;
   border-bottom: 1.5px dashed var(--line);
 }
 .receipt-row:last-child { border-bottom: none; }
-.receipt-row .k { color: var(--ink-500); font-size: 36px; }
-.receipt-row .v { color: var(--ink-900); font-size: 40px; font-weight: 600; text-align: right; }
+.receipt-row .k { color: var(--ink-500); font-size: calc(36px * var(--ui-scale)); }
+.receipt-row .v { color: var(--ink-900); font-size: calc(40px * var(--ui-scale)); font-weight: 600; text-align: right; }
 
 /* ── Placeholder image (striped) ─────────────────────────────────── */
 .placeholder-img {

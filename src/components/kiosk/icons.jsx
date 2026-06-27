@@ -11,8 +11,6 @@ import React from 'react';
 export function I({ d, size = 28, sw = 2, className = '', style }) {
   return (
     <svg
-      width={size}
-      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -20,7 +18,12 @@ export function I({ d, size = 28, sw = 2, className = '', style }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
-      style={style}
+      style={{
+        width: `calc(${size}px * var(--ui-scale))`,
+        height: `calc(${size}px * var(--ui-scale))`,
+        flexShrink: 0,
+        ...style,
+      }}
       aria-hidden="true"
     >
       {d}

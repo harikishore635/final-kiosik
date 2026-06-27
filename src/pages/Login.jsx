@@ -16,8 +16,9 @@ import { isValidIndianMobile, maskMobile, normalizeIndianMobile } from '../utils
 import { speak } from '../utils/ttsService';
 import { useSession } from '../context/SessionContext';
 import { VK, I, ic, Keypad, OTPInput, AadhaarCells } from '../components/kiosk';
-import { LoadingScreen, BiometricScanner, AadhaarChip } from '../components/loading';
+import { LoadingScreen, BiometricScanner, AadhaarChip, ButtonSpinner } from '../components/loading';
 import { mockDelayRange } from '../utils/mockDelay';
+import { toCitizenMessage } from '../utils/safeError';
 
 // Mock CA/Consumer lookup DB
 const ALT_AUTH_DB = {
@@ -237,7 +238,7 @@ export default function Login() {
       toast.success('OTP sent successfully.');
       tts('OTP sent successfully.', { priority: 'warning' });
     } catch (error) {
-      const msg = error?.error || error?.message || 'Failed to send OTP. Please try again.';
+      const msg = toCitizenMessage(error, 'Failed to send OTP. Please try again.');
       setOtpError(msg);
       toast.error(msg);
     }
@@ -316,7 +317,7 @@ export default function Login() {
       }
       finalizeLoginForMethod({ data: response.data, token: response.token, method: 'qr_demo' });
     } catch (e) {
-      toast.error(e?.error || e?.message || 'QR verification failed.');
+      toast.error(toCitizenMessage(e, 'QR verification failed.'));
     } finally {
       setMethodLoading('');
     }
@@ -340,7 +341,7 @@ export default function Login() {
         method: 'biometric_fingerprint',
       });
     } catch (e) {
-      toast.error(e?.error || e?.message || 'Biometric verification failed.');
+      toast.error(toCitizenMessage(e, 'Biometric verification failed.'));
     } finally {
       setMethodLoading('');
     }
@@ -704,6 +705,7 @@ export default function Login() {
             disabled={methodLoading === 'qr'}
             onClick={handleQrDemoLogin}
           >
+            {methodLoading === 'qr' && <ButtonSpinner variant="primary" />}
             {methodLoading === 'qr' ? 'Verifying…' : 'Demo: Skip QR'}
             <I d={ic.arrow} size={26} />
           </button>
@@ -733,6 +735,7 @@ export default function Login() {
             disabled={methodLoading === 'biometric'}
             onClick={handleBiometricLogin}
           >
+            {methodLoading === 'biometric' && <ButtonSpinner variant="primary" />}
             {methodLoading === 'biometric' ? 'Verifying…' : 'Demo: Skip Biometric'}
             <I d={ic.arrow} size={26} />
           </button>

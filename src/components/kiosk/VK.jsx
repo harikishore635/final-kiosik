@@ -57,7 +57,7 @@ function Sheet({ open, onClose, title, width = 640, children }) {
         position: 'fixed', inset: 0, zIndex: 200,
         background: 'rgba(15,23,42,0.55)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 24,
+        padding: 'calc(24px * var(--ui-scale))',
       }}
     >
       <div
@@ -65,20 +65,20 @@ function Sheet({ open, onClose, title, width = 640, children }) {
         aria-modal="true"
         aria-label={title}
         style={{
-          background: 'white', borderRadius: 28,
-          width: '100%', maxWidth: width,
+          background: 'white', borderRadius: 'calc(28px * var(--ui-scale))',
+          width: '100%', maxWidth: `calc(${width}px * var(--ui-scale))`,
           maxHeight: '80vh', overflowY: 'auto',
-          padding: 32, boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
+          padding: 'calc(32px * var(--ui-scale))', boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h2 style={{ fontSize: 30, fontWeight: 800, color: 'var(--indigo-900, #1e3a8a)', margin: 0 }}>{title}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'calc(20px * var(--ui-scale))' }}>
+          <h2 style={{ fontSize: 'calc(30px * var(--ui-scale))', fontWeight: 800, color: 'var(--indigo-900, #1e3a8a)', margin: 0 }}>{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
             style={{
-              width: 44, height: 44, borderRadius: '50%', border: 'none',
+              width: 'calc(44px * var(--ui-scale))', height: 'calc(44px * var(--ui-scale))', borderRadius: '50%', border: 'none',
               background: 'var(--surface-2, #f1f5f9)', cursor: 'pointer',
               display: 'grid', placeItems: 'center', flexShrink: 0,
             }}
@@ -297,7 +297,7 @@ export default function VK({
 
       <Sheet open={showLangModal} onClose={() => setShowLangModal(false)} title={t('language.select')} width={760}>
         <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12,
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'calc(12px * var(--ui-scale))',
         }}>
           {ALL_LANGUAGES.map((l) => (
             <button
@@ -306,8 +306,8 @@ export default function VK({
               disabled={loadingLang !== null}
               onClick={() => handleSelectLanguage(l.code)}
               style={{
-                padding: '16px 12px', borderRadius: 14, cursor: 'pointer',
-                fontSize: 18, fontWeight: 600, textAlign: 'center',
+                padding: 'calc(16px * var(--ui-scale)) calc(12px * var(--ui-scale))', borderRadius: 'calc(14px * var(--ui-scale))', cursor: 'pointer',
+                fontSize: 'calc(18px * var(--ui-scale))', fontWeight: 600, textAlign: 'center',
                 border: i18n.language === l.code ? '2px solid var(--indigo-700, #4338ca)' : '1.5px solid var(--line, #e2e8f0)',
                 background: i18n.language === l.code ? 'var(--indigo-700, #4338ca)' : 'white',
                 color: i18n.language === l.code ? 'white' : 'var(--ink-700, #334155)',
@@ -321,17 +321,17 @@ export default function VK({
       </Sheet>
 
       <Sheet open={showHelpModal} onClose={() => setShowHelpModal(false)} title={t('app.help')} width={520}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'calc(12px * var(--ui-scale))' }}>
           {helpActions.map((a) => (
             <button
               key={a.label}
               type="button"
               onClick={() => runHelpAction(a.run)}
               style={{
-                display: 'flex', alignItems: 'center', gap: 16,
-                padding: '18px 20px', borderRadius: 16,
+                display: 'flex', alignItems: 'center', gap: 'calc(16px * var(--ui-scale))',
+                padding: 'calc(18px * var(--ui-scale)) calc(20px * var(--ui-scale))', borderRadius: 'calc(16px * var(--ui-scale))',
                 border: '1.5px solid var(--line, #e2e8f0)', background: 'white',
-                fontSize: 20, fontWeight: 600, color: 'var(--ink-700, #334155)',
+                fontSize: 'calc(20px * var(--ui-scale))', fontWeight: 600, color: 'var(--ink-700, #334155)',
                 cursor: 'pointer', textAlign: 'left',
               }}
             >

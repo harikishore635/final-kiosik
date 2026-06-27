@@ -1,5 +1,6 @@
 ﻿import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { adminAuthAPI, otpAPI } from '../utils/apiService';
+import { toCitizenMessage } from '../utils/safeError';
 
 export const AuthContext = createContext(null);
 
@@ -105,7 +106,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        error: error?.error || error?.message || 'Failed to send OTP. Please try again.',
+        error: toCitizenMessage(error, 'Failed to send OTP. Please try again.'),
         retryAfterSeconds: error?.retryAfterSeconds ?? 0,
         providerStatusCode: error?.providerStatusCode ?? null,
         providerMessage: error?.providerMessage ?? null,
@@ -133,7 +134,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        error: error?.error || error?.message || 'OTP verification failed. Please try again.',
+        error: toCitizenMessage(error, 'OTP verification failed. Please try again.'),
       };
     } finally {
       setOtpLoading(false);
@@ -155,7 +156,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        error: error?.error || error?.message || 'Admin login failed.',
+        error: toCitizenMessage(error, 'Admin login failed.'),
       };
     }
   }, []);
@@ -183,7 +184,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        error: error?.error || error?.message || 'MFA verification failed.',
+        error: toCitizenMessage(error, 'MFA verification failed.'),
       };
     }
   }, []);
@@ -212,7 +213,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return {
         success: false,
-        error: error?.error || error?.message || 'Session refresh failed.',
+        error: toCitizenMessage(error, 'Session refresh failed.'),
       };
     }
   }, []);

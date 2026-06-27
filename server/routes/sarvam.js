@@ -438,7 +438,7 @@ router.post('/text-to-speech-stream', async (req, res) => {
     } catch (err) {
         console.error('[TTS Stream Error]', err.message);
         if (!res.headersSent) {
-            res.status(500).json({ error: 'Streaming TTS failed', detail: err.message });
+            res.status(500).json({ error: 'Streaming TTS failed' });
         } else {
             res.end();
         }
@@ -509,7 +509,7 @@ router.post('/tts-stream-bridge', async (req, res) => {
 
     } catch (err) {
         console.error('[TTS Stream Bridge Error]', err.message);
-        if (!res.headersSent) res.status(500).json({ error: err.message });
+        if (!res.headersSent) res.status(500).json({ error: 'Streaming TTS failed' });
         else res.end();
     }
 });

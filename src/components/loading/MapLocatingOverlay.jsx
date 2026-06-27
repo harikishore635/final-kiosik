@@ -44,7 +44,7 @@ export default function MapLocatingOverlay() {
         }}
       >
         <RadiantLoader variant="sweep" size={34} />
-        <div style={{ textAlign: 'left' }}>
+        <div role="status" aria-live="polite" aria-atomic="true" style={{ textAlign: 'left' }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink-900)' }}>
             {t('loading.findingOffices', 'Finding offices near you')}
           </div>

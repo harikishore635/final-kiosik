@@ -7,7 +7,8 @@ import { useAccessibility } from '../AccessibilityProvider';
 //   sweep  — spinning ring orbits a static arch (background/poll loads)
 //   draw   — arcs draw themselves continuously (boot splash, dark bg)
 export default function RadiantLoader({ variant = 'signal', size = 76, dark = false }) {
-  const { reducedMotion } = useAccessibility();
+  const { reducedMotion, userMode } = useAccessibility();
+  const loopDuration = userMode === 'elderly' ? 2.4 : 1.6;
 
   const strokeOuter = dark ? 'var(--cream)' : 'var(--indigo-700)';
   const strokeMid = dark ? 'var(--cream)' : 'var(--indigo-500)';
@@ -40,8 +41,8 @@ export default function RadiantLoader({ variant = 'signal', size = 76, dark = fa
         <svg width={archSize} height={archSize} viewBox="0 0 120 120" fill="none">
           <path d="M30 78 A30 30 0 0 1 90 78" stroke="var(--indigo-700)" strokeWidth="6" strokeLinecap="round" />
           <path d="M40 78 A20 20 0 0 1 80 78" stroke="var(--indigo-500)" strokeWidth="5" strokeLinecap="round" opacity="0.85" />
-          <rect x="28" y="80" width="64" height="4" rx="2" fill="var(--indigo-700)" opacity="0.85" />
-          <circle cx="60" cy="40" r="6" fill="var(--saffron-500)" />
+          <rect x="28" y="80" width="64" height="4" rx="2" fill="var(--indigo-700)" opacity="0.9" />
+          <circle cx="60" cy="40" r="4" fill="var(--saffron-500)" />
         </svg>
       </div>
     );
@@ -62,17 +63,17 @@ export default function RadiantLoader({ variant = 'signal', size = 76, dark = fa
         />
         <path
           d="M48 78 A12 12 0 0 1 72 78" pathLength="100" stroke={strokeInner} strokeWidth="4"
-          strokeLinecap="round" strokeDasharray="100" opacity={staticOpacity ?? 0.7}
+          strokeLinecap="round" strokeDasharray="100" opacity={staticOpacity ?? 0.6}
           style={{ animation: drawAnim('0.4s') }}
         />
         <rect x="28" y="80" width="64" height="4" rx="2" fill={strokeOuter} opacity="0.9" />
-        <circle cx="60" cy="40" r="5" fill="var(--saffron-500)" />
+        <circle cx="60" cy="40" r="4" fill="var(--saffron-500)" />
       </svg>
     );
   }
 
   // signal (default)
-  const glowAnim = (delay) => (reducedMotion ? 'none' : `archGlow 1.6s ease-in-out infinite ${delay}`);
+  const glowAnim = (delay) => (reducedMotion ? 'none' : `archGlow ${loopDuration}s ease-in-out infinite ${delay}`);
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none" style={{ overflow: 'visible' }}>
       <path
@@ -87,10 +88,10 @@ export default function RadiantLoader({ variant = 'signal', size = 76, dark = fa
         d="M48 78 A12 12 0 0 1 72 78" stroke={strokeInner} strokeWidth="4" strokeLinecap="round"
         style={{ animation: glowAnim('0.36s'), opacity: staticOpacity }}
       />
-      <rect x="28" y="80" width="64" height="4" rx="2" fill={strokeOuter} opacity="0.85" />
+      <rect x="28" y="80" width="64" height="4" rx="2" fill={strokeOuter} opacity="0.9" />
       <circle
-        cx="60" cy="40" r="5" fill="var(--saffron-500)"
-        style={{ animation: reducedMotion ? 'none' : 'dotPulse 1.6s ease-in-out infinite', opacity: staticOpacity }}
+        cx="60" cy="40" r="4" fill="var(--saffron-500)"
+        style={{ animation: reducedMotion ? 'none' : `dotPulse ${loopDuration}s ease-in-out infinite`, opacity: staticOpacity }}
       />
     </svg>
   );

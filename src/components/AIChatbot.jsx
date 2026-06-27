@@ -328,7 +328,7 @@ const AIChatbot = () => {
       {isOpen && (
         <div
           style={{
-            position: 'fixed', right: 0, top: 0, bottom: 0, width: 900,
+            position: 'fixed', right: 0, top: 0, bottom: 0, width: 'calc(900px * var(--ui-scale))',
             background: 'var(--surface-0)', borderLeft: '1px solid var(--line)',
             boxShadow: '-40px 0 90px rgba(20,16,31,.28)',
             display: 'flex', flexDirection: 'column', zIndex: 9000,
@@ -338,23 +338,23 @@ const AIChatbot = () => {
           {/* Header */}
           <div style={{
             background: 'var(--indigo-700)', color: 'var(--cream)',
-            padding: '40px 44px', display: 'flex', alignItems: 'center', gap: 24, flexShrink: 0,
+            padding: 'calc(40px * var(--ui-scale)) calc(44px * var(--ui-scale))', display: 'flex', alignItems: 'center', gap: 'calc(24px * var(--ui-scale))', flexShrink: 0,
           }}>
-            <div style={{ width: 96, height: 96, borderRadius: 26, background: 'rgba(255,255,255,.16)', display: 'grid', placeItems: 'center' }}>
+            <div style={{ width: 'calc(96px * var(--ui-scale))', height: 'calc(96px * var(--ui-scale))', borderRadius: 'calc(26px * var(--ui-scale))', background: 'rgba(255,255,255,.16)', display: 'grid', placeItems: 'center' }}>
               <I d={ic.chat} size={52} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 46, fontWeight: 800, letterSpacing: '-.01em' }}>
+              <div style={{ fontSize: 'calc(46px * var(--ui-scale))', fontWeight: 800, letterSpacing: '-.01em' }}>
                 {t('chatbot.title')}
               </div>
-              <div style={{ fontSize: 28, opacity: .85, marginTop: 8, display: 'flex', alignItems: 'center', gap: 14 }}>
-                <span style={{ width: 18, height: 18, borderRadius: '50%', background: isListening ? 'var(--warn)' : 'var(--ok)', display: 'inline-block' }} />
+              <div style={{ fontSize: 'calc(28px * var(--ui-scale))', opacity: .85, marginTop: 'calc(8px * var(--ui-scale))', display: 'flex', alignItems: 'center', gap: 'calc(14px * var(--ui-scale))' }}>
+                <span style={{ width: 'calc(18px * var(--ui-scale))', height: 'calc(18px * var(--ui-scale))', borderRadius: '50%', background: isListening ? 'var(--warn)' : 'var(--ok)', display: 'inline-block' }} />
                 {isListening ? t('chatbot.listeningStatus') : providerLabel}
               </div>
             </div>
             {messages.some(m => m.type === 'bot' && m.id !== 1) && !isSpeakingReply && (
               <button
-                style={{ width: 80, height: 80, borderRadius: 22, background: 'rgba(255,255,255,.14)', border: 'none', color: 'var(--cream)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
+                style={{ width: 'calc(80px * var(--ui-scale))', height: 'calc(80px * var(--ui-scale))', borderRadius: 'calc(22px * var(--ui-scale))', background: 'rgba(255,255,255,.14)', border: 'none', color: 'var(--cream)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
                 onClick={readLastReply}
                 aria-label={t('chatbot.readReplyAloud')}
               >
@@ -363,7 +363,7 @@ const AIChatbot = () => {
             )}
             {isSpeakingReply && (
               <button
-                style={{ width: 80, height: 80, borderRadius: 22, background: 'rgba(255,255,255,.14)', border: 'none', color: 'var(--cream)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
+                style={{ width: 'calc(80px * var(--ui-scale))', height: 'calc(80px * var(--ui-scale))', borderRadius: 'calc(22px * var(--ui-scale))', background: 'rgba(255,255,255,.14)', border: 'none', color: 'var(--cream)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
                 onClick={stopSpeaking}
                 aria-label="Stop speaking"
               >
@@ -371,7 +371,7 @@ const AIChatbot = () => {
               </button>
             )}
             <button
-              style={{ width: 80, height: 80, borderRadius: 22, background: 'rgba(255,255,255,.14)', border: 'none', color: 'var(--cream)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
+              style={{ width: 'calc(80px * var(--ui-scale))', height: 'calc(80px * var(--ui-scale))', borderRadius: 'calc(22px * var(--ui-scale))', background: 'rgba(255,255,255,.14)', border: 'none', color: 'var(--cream)', cursor: 'pointer', display: 'grid', placeItems: 'center' }}
               onClick={() => { setIsOpen(false); stopListening(); stopTTS(); }}
               aria-label="Close"
             >
@@ -380,31 +380,31 @@ const AIChatbot = () => {
           </div>
 
           {/* Messages */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: 44, display: 'flex', flexDirection: 'column', gap: 32, background: 'var(--surface-1)' }}
+          <div style={{ flex: 1, overflowY: 'auto', padding: 'calc(44px * var(--ui-scale))', display: 'flex', flexDirection: 'column', gap: 'calc(32px * var(--ui-scale))', background: 'var(--surface-1)' }}
                role="log" aria-live="polite" aria-label="Chat messages">
             {messages.map((msg) => (
               <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.type === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{
-                  maxWidth: 660,
+                  maxWidth: 'calc(660px * var(--ui-scale))',
                   background: msg.type === 'user' ? 'var(--indigo-700)' : '#fff',
                   color: msg.type === 'user' ? 'var(--cream)' : 'var(--ink-900)',
                   border: msg.type === 'bot' ? '1px solid var(--line)' : 'none',
-                  borderRadius: msg.type === 'user' ? '32px 32px 10px 32px' : '32px 32px 32px 10px',
-                  padding: '32px 38px', fontSize: 34, lineHeight: 1.55,
+                  borderRadius: msg.type === 'user' ? 'calc(32px * var(--ui-scale)) calc(32px * var(--ui-scale)) calc(10px * var(--ui-scale)) calc(32px * var(--ui-scale))' : 'calc(32px * var(--ui-scale)) calc(32px * var(--ui-scale)) calc(32px * var(--ui-scale)) calc(10px * var(--ui-scale))',
+                  padding: 'calc(32px * var(--ui-scale)) calc(38px * var(--ui-scale))', fontSize: 'calc(34px * var(--ui-scale))', lineHeight: 1.55,
                   boxShadow: msg.type === 'bot' ? 'var(--shadow-1)' : 'none',
                 }}>
                   {msg.text}
                   {msg.streaming && (
-                    <span style={{ display: 'inline-block', width: 8, height: 28, background: 'var(--indigo-500)', borderRadius: 3, marginLeft: 6, animation: 'dot 1s infinite' }} />
+                    <span style={{ display: 'inline-block', width: 'calc(8px * var(--ui-scale))', height: 'calc(28px * var(--ui-scale))', background: 'var(--indigo-500)', borderRadius: 3, marginLeft: 6, animation: 'dot 1s infinite' }} />
                   )}
                 </div>
 
                 {/* AI-suggested quick replies */}
                 {msg.type === 'bot' && !msg.streaming && msg.suggestions?.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16, maxWidth: 700 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'calc(16px * var(--ui-scale))', marginTop: 'calc(16px * var(--ui-scale))', maxWidth: 'calc(700px * var(--ui-scale))' }}>
                     {msg.suggestions.map((s, i) => (
                       <button key={i}
-                              style={{ background: 'var(--indigo-100)', color: 'var(--indigo-700)', border: '1.5px solid color-mix(in oklab,var(--indigo-700) 22%,white)', borderRadius: 999, padding: '20px 30px', fontSize: 28, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                              style={{ background: 'var(--indigo-100)', color: 'var(--indigo-700)', border: '1.5px solid color-mix(in oklab,var(--indigo-700) 22%,white)', borderRadius: 999, padding: 'calc(20px * var(--ui-scale)) calc(30px * var(--ui-scale))', fontSize: 'calc(28px * var(--ui-scale))', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
                               onClick={() => handleSuggestionClick(s)}>
                         {s}
                       </button>
@@ -428,10 +428,10 @@ const AIChatbot = () => {
 
             {/* Context suggestions when idle */}
             {!isTyping && messages.length > 0 && messages.at(-1)?.type === 'bot' && !messages.at(-1)?.suggestions?.length && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'calc(16px * var(--ui-scale))' }}>
                 {getSuggestionsByContext(context, t).map((s, i) => (
                   <button key={i}
-                          style={{ background: 'var(--indigo-100)', color: 'var(--indigo-700)', border: '1.5px solid color-mix(in oklab,var(--indigo-700) 22%,white)', borderRadius: 999, padding: '20px 30px', fontSize: 28, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                          style={{ background: 'var(--indigo-100)', color: 'var(--indigo-700)', border: '1.5px solid color-mix(in oklab,var(--indigo-700) 22%,white)', borderRadius: 999, padding: 'calc(20px * var(--ui-scale)) calc(30px * var(--ui-scale))', fontSize: 'calc(28px * var(--ui-scale))', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
                           onClick={() => handleSuggestionClick(s)}>
                     {s}
                   </button>
@@ -450,20 +450,20 @@ const AIChatbot = () => {
 
           {/* Voice error */}
           {voiceError && (
-            <div style={{ padding: '0 44px 16px' }}>
+            <div style={{ padding: '0 calc(44px * var(--ui-scale)) calc(16px * var(--ui-scale))' }}>
               <span className="badge b-err">{voiceError}</span>
             </div>
           )}
 
           {/* Input row */}
-          <div style={{ padding: '36px 44px', borderTop: '1px solid var(--line)', background: 'var(--surface-0)', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+          <div style={{ padding: 'calc(36px * var(--ui-scale)) calc(44px * var(--ui-scale))', borderTop: '1px solid var(--line)', background: 'var(--surface-0)', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'calc(24px * var(--ui-scale))' }}>
               {/* Mic */}
               <button
                 onClick={toggleVoice}
                 disabled={isTyping}
                 style={{
-                  width: 104, height: 104, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                  width: 'calc(104px * var(--ui-scale))', height: 'calc(104px * var(--ui-scale))', borderRadius: '50%', border: 'none', cursor: 'pointer',
                   flexShrink: 0, display: 'grid', placeItems: 'center',
                   background: isListening ? 'var(--err)' : 'var(--indigo-100)',
                   color: isListening ? '#fff' : 'var(--indigo-700)',
@@ -485,9 +485,9 @@ const AIChatbot = () => {
                 maxLength={500}
                 style={{
                   flex: 1, background: '#fff', border: '2px solid var(--line)',
-                  borderRadius: 999, padding: '28px 44px',
-                  fontSize: 34, fontFamily: 'inherit', color: 'var(--ink-900)',
-                  outline: 'none', minHeight: 104,
+                  borderRadius: 999, padding: 'calc(28px * var(--ui-scale)) calc(44px * var(--ui-scale))',
+                  fontSize: 'calc(34px * var(--ui-scale))', fontFamily: 'inherit', color: 'var(--ink-900)',
+                  outline: 'none', minHeight: 'calc(104px * var(--ui-scale))',
                 }}
               />
 
@@ -496,7 +496,7 @@ const AIChatbot = () => {
                 onClick={handleSend}
                 disabled={!input.trim() || isTyping || isListening}
                 style={{
-                  width: 104, height: 104, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                  width: 'calc(104px * var(--ui-scale))', height: 'calc(104px * var(--ui-scale))', borderRadius: '50%', border: 'none', cursor: 'pointer',
                   flexShrink: 0, display: 'grid', placeItems: 'center',
                   background: (!input.trim() || isTyping || isListening) ? 'var(--ink-300)' : 'var(--indigo-700)',
                   color: 'var(--cream)',
@@ -507,7 +507,7 @@ const AIChatbot = () => {
               </button>
             </div>
 
-            <div className="meta" style={{ textAlign: 'center', marginTop: 20, fontSize: 26 }}>
+            <div className="meta" style={{ textAlign: 'center', marginTop: 'calc(20px * var(--ui-scale))', fontSize: 'calc(26px * var(--ui-scale))' }}>
               {isListening
                 ? t('chatbot.listeningIn', { lang: sttLangCode })
                 : t('chatbot.footerHint')}

@@ -1,14 +1,16 @@
 import React, { Suspense, lazy, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { VoiceAssistantProvider } from './ai/provider/VoiceAssistantProvider';
 import { SessionProvider } from './context/SessionContext';
 import AccessibilityProvider, { useAccessibility } from './components/AccessibilityProvider';
+import { ToastViewport } from './context/ToastContext';
 import EmergencyAlertBanner from './components/EmergencyAlertBanner';
 import EmergencyQuickAccess from './components/EmergencyQuickAccess';
 import ScreenReaderOverlay from './components/ScreenReaderOverlay';
 import VoiceNavigation from './components/VoiceNavigation';
 import AIChatbot from './components/AIChatbot';
+import useIdleRearm from './hooks/useIdleRearm';
 
 // Eagerly loaded pages
 import { Landing, Login, Home, ModeSelection, OfficeLocator } from './pages';
@@ -39,6 +41,7 @@ const MunicipalGrievance = lazy(() => import('./pages/MunicipalGrievance'));
 const ConsumerProfile   = lazy(() => import('./pages/ConsumerProfile'));
 const PropertyTaxPayment = lazy(() => import('./pages/PropertyTaxPayment'));
 const MobileUpload      = lazy(() => import('./pages/MobileUpload'));
+const Attract           = lazy(() => import('./pages/Attract'));
 
 // Admin pages
 const AdminLogin               = lazy(() => import('./pages/admin/AdminLogin'));
@@ -67,6 +70,10 @@ const AI_EXCLUDED_PATHS = new Set([
   '/language-select', '/voice-select',
 ]);
 
+// After this much inactivity on any citizen-facing page, return to the
+// attract loop (mid-point of the 60-90s range the design spec allows).
+const IDLE_REARM_MS = 75000;
+
 function LoadingScreen() {
   const { t } = useTranslation();
   return (
@@ -89,6 +96,7 @@ function LoadingScreen() {
 
 function AIShell({ children }) {
   const { pathname: path } = useLocation();
+  const navigate = useNavigate();
   const { userMode } = useAccessibility();
   const isBlind = userMode === 'blind';
   const isAdminPath = path.startsWith('/admin') || path.startsWith('/super-admin') ||
@@ -96,8 +104,17 @@ function AIShell({ children }) {
   const isAuthPath = AI_EXCLUDED_PATHS.has(path);
   const showChatbot = !isAdminPath && !isAuthPath;
 
+  // Idle re-arm: any citizen-facing, non-attract, non-admin page returns to
+  // the attract loop after IDLE_REARM_MS of no touch/keyboard activity.
+  useIdleRearm({
+    timeoutMs: IDLE_REARM_MS,
+    enabled: path !== '/attract' && !isAdminPath,
+    onIdle: () => navigate('/attract'),
+  });
+
   return (
     <div className="kiosk-stage">
+      <ToastViewport />
       <EmergencyAlertBanner />
       <EmergencyQuickAccess />
       {/* ScreenReaderOverlay only for blind mode — avoids duplicate voice with VoiceNavigation */}
@@ -133,6 +150,7 @@ export default function App() {
               <Routes>
               {/* Public / kiosk entry */}
               <Route path="/"                 element={<Landing />} />
+              <Route path="/attract"          element={<Attract />} />
               <Route path="/login"            element={<Login />} />
               <Route path="/language-select"  element={<LanguageSelection />} />
               <Route path="/voice-select"     element={<VoiceModeSelection />} />

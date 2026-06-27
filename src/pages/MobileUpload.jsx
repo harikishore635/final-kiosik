@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { CheckCircle, Camera, Image as ImageIcon, FileText, XCircle } from 'lucide-react';
 import { uploadPublicAPI } from '../utils/apiService';
 import { validateUploadSecurity } from '../utils/security';
+import { useDelayedLoader } from '../hooks/useDelayedLoader';
+import { ButtonSpinner } from '../components/loading';
 
 const MAX_FILES = 5;
 
@@ -24,6 +26,9 @@ const MobileUpload = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const isDisabled = useMemo(() => !pinVerified || uploading, [pinVerified, uploading]);
+  // Real network upload with variable latency — gate the spinner so a fast
+  // response (<300ms) never flashes it.
+  const showUploadSpinner = useDelayedLoader(uploading);
 
   const handleVerifyPin = async () => {
     setVerifyError('');
@@ -213,8 +218,9 @@ const MobileUpload = () => {
               type="button"
               onClick={handleUpload}
               disabled={isDisabled || files.length === 0}
-              className="mt-4 w-full bg-government-blue text-white py-3 rounded-lg font-semibold disabled:opacity-50"
+              className="mt-4 w-full bg-government-blue text-white py-3 rounded-lg font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
             >
+              {showUploadSpinner && <ButtonSpinner variant="primary" />}
               {uploading ? 'Uploading...' : 'Upload to kiosk'}
             </button>
           </div>

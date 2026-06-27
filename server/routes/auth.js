@@ -298,7 +298,8 @@ router.post('/aadhaar/verify-qr', (req, res) => {
   try {
     parsed = parseUidaiQrText(qrText);
   } catch (err) {
-    return res.status(422).json({ success: false, error: `QR parse failed: ${err.message}` });
+    console.error('[AUTH] QR parse failed', err);
+    return res.status(422).json({ success: false, error: 'QR code could not be read. Please try again.' });
   }
 
   // RSA signature check (best-effort — cert may not be present in dev)

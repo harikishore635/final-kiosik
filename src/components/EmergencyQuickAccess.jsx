@@ -79,7 +79,7 @@ const EmergencyQuickAccess = () => {
         <button
           onClick={() => setIsOpen(true)}
           className="fixed z-[9998] bg-red-600 hover:bg-red-700 text-white rounded-full shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 animate-pulse"
-          style={{ bottom: 260, left: 32, width: 160, height: 160 }}
+          style={{ bottom: 'calc(260px * var(--ui-scale))', left: 'calc(32px * var(--ui-scale))', width: 'calc(160px * var(--ui-scale))', height: 'calc(160px * var(--ui-scale))' }}
           aria-label="Emergency SOS"
           title={t('emergency.title')}
         >

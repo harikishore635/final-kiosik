@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 
 export const ToastContext = createContext(null);
@@ -17,6 +17,8 @@ const typeStyles = {
     className: 'border-blue-200 bg-blue-50 text-blue-800',
   },
 };
+
+const ToastListContext = createContext(null);
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
@@ -41,37 +43,53 @@ export const ToastProvider = ({ children }) => {
     info: (message, duration) => showToast(message, 'info', duration),
   }), [showToast]);
 
+  const listValue = useMemo(() => ({ toasts, removeToast }), [toasts, removeToast]);
+
   return (
     <ToastContext.Provider value={value}>
-      {children}
-      <div className="fixed top-4 right-4 z-[10000] w-[min(92vw,28rem)] space-y-3">
-        {toasts.map((toast) => {
-          const style = typeStyles[toast.type] || typeStyles.info;
-          const Icon = style.icon;
-
-          return (
-            <div
-              key={toast.id}
-              role="status"
-              aria-live="polite"
-              className={`rounded-xl border shadow-lg p-4 animate-slide-up ${style.className}`}
-            >
-              <div className="flex items-start gap-3">
-                <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <p className="text-sm sm:text-base font-semibold leading-snug flex-1">{toast.message}</p>
-                <button
-                  type="button"
-                  onClick={() => removeToast(toast.id)}
-                  className="rounded-md p-1 hover:bg-black/5 transition-colors"
-                  aria-label="Close notification"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <ToastListContext.Provider value={listValue}>
+        {children}
+      </ToastListContext.Provider>
     </ToastContext.Provider>
+  );
+};
+
+// Renders the actual toast stack. Mounted inside `.kiosk-stage` (see App.jsx)
+// so notifications inherit --kiosk-scale and appear inside the vertical kiosk
+// UI instead of pinned to the real browser viewport corner.
+export const ToastViewport = () => {
+  const listContext = useContext(ToastListContext);
+  if (!listContext) return null;
+  const { toasts, removeToast } = listContext;
+
+  return (
+    <div className="vk-toast-viewport">
+      {toasts.map((toast) => {
+        const style = typeStyles[toast.type] || typeStyles.info;
+        const Icon = style.icon;
+
+        return (
+          <div
+            key={toast.id}
+            role="status"
+            aria-live="polite"
+            className={`rounded-xl border shadow-lg p-4 animate-slide-up ${style.className}`}
+          >
+            <div className="flex items-start gap-3">
+              <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <p className="text-sm sm:text-base font-semibold leading-snug flex-1">{toast.message}</p>
+              <button
+                type="button"
+                onClick={() => removeToast(toast.id)}
+                className="rounded-md p-1 hover:bg-black/5 transition-colors"
+                aria-label="Close notification"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 };

@@ -289,12 +289,14 @@ app.use('/api/*', (req, res) => {
 
 // ─── Global Error Handler ──────────────────────────────────────────────────
 app.use((err, req, res, _next) => {
-  // Never expose stack traces or internal error details in production
-  const isProdEnv = process.env.NODE_ENV === 'production';
-  console.error('[ERROR]', err.message, isProdEnv ? '' : err.stack);
+  // Never expose internal error details to clients unless explicitly
+  // opted into via DEBUG_ERRORS — defaulting on "not production" leaked
+  // stack/message text to every kiosk user whenever NODE_ENV was unset.
+  console.error('[ERROR]', err.message, err.stack);
+  const debugErrors = process.env.DEBUG_ERRORS === 'true';
   res.status(err.status || 500).json({
     success: false,
-    error: isProdEnv ? 'Internal server error' : err.message,
+    error: debugErrors ? err.message : 'Internal server error',
   });
 });
 
