@@ -2,9 +2,9 @@
 
 Generated 2026-06-27. Root cause across most categories: `src/design/tokens.css` / `primitives.css` define one sizing/color system, but React components (`Button.jsx`, `Card.jsx`, `Input.jsx`, `Select.jsx`) independently reimplement the same concepts in raw Tailwind at a different scale.
 
-**Update 2026-06-27 — remediation pass applied.** Each section below is tagged ✅ Fixed / ◐ Partial / ⬜ Deferred. See the resolution log at the end.
+**Update 2026-06-27 — remediation pass applied.** Each section below is tagged  Fixed / ◐ Partial /  Deferred. See the resolution log at the end.
 
-## 1. Hardcoded Text / Missing i18n (High) — ✅ Fixed
+## 1. Hardcoded Text / Missing i18n (High) —  Fixed
 
 - `alert()` calls bypassed i18n entirely — **now routed through the in-app `Modal`** with `t()` keys:
   - `src/pages/Complaints.jsx` — photo limit, geolocation failure, geolocation unsupported → `complaints.maxPhotos` / `complaints.locationFailed` / `complaints.geoUnsupported`, rendered via a `<Modal type="warning">`.
@@ -18,12 +18,12 @@ Generated 2026-06-27. Root cause across most categories: `src/design/tokens.css`
 - Keypad aria-labels (`src/components/kiosk/Keypad.jsx`) — **now `app.delete` / `app.submit` / `keypad.digit`** (interpolated).
 - All new keys were added to **all 23 locale files** with native-script translations.
 
-## 2. Dropdowns — ⬜ No change needed
+## 2. Dropdowns —  No change needed
 
 - Only real custom select is `src/components/Select.jsx` (`border-2 border-gray-300`, lucide `ChevronDown`). Scale was aligned to `.field` (see §4).
 - `src/components/kiosk/DD.jsx` is not actually a dropdown — it's a department dot/badge. Naming collision only; not a true duplicate. Left as-is.
 
-## 3. Modals / Popups — no shared base component — ⬜ Deferred
+## 3. Modals / Popups — no shared base component —  Deferred
 
 | File | Backdrop | Width | Radius | Close button |
 |---|---|---|---|---|
@@ -33,7 +33,7 @@ Generated 2026-06-27. Root cause across most categories: `src/design/tokens.css`
 
 Extracting a shared `BaseModal` (backdrop/radius/close-button/animation) is **deferred** — higher risk, touches several flows. Close-button aria-labels were standardized (§1).
 
-## 4. Size / Spacing Inconsistencies (tokens defined but ignored) — ✅ Fixed (component scale aligned)
+## 4. Size / Spacing Inconsistencies (tokens defined but ignored) —  Fixed (component scale aligned)
 
 The React components were brought up to the primitive kiosk scale (touch-target sizing) and a single radius system:
 
@@ -42,11 +42,11 @@ The React components were brought up to the primitive kiosk scale (touch-target 
 - **Cards**: `Card.jsx` → radius `calc(28px*var(--ui-scale))` (matches `--r-lg`/`.card`); padding scaled toward `.card` (64px*scale at the default size); min-heights now scale with `--ui-scale`.
 - **Border radius** is now expressed one way in the shared components — `calc(_px * var(--ui-scale))` aligned to the primitives. (`AadhaarCameraScanner.jsx` inline px radii are intentionally left: it is a fixed-pixel, canvas-anchored overlay where scaling radii via `--ui-scale` would distort it.)
 
-## 5. Icons — ⬜ Deferred
+## 5. Icons —  Deferred
 
 - All `viewBox="0 0 48 48"`. `strokeWidth` still varies per icon (1.2–2.5); fill/stroke still mixed. Standardizing the icon set is **deferred** (low severity, no behavioural impact).
 
-## 6. Colors — `tokens.css` exists but bypassed — ✅ Fixed
+## 6. Colors — `tokens.css` exists but bypassed —  Fixed
 
 - A neutral **slate scale** + **accent/status** tokens were added to `src/design/tokens.css` (hex values preserved so appearance is unchanged).
 - `src/components/AadhaarCameraScanner.jsx` — all raw hex replaced with `var(--slate-*)` / `var(--accent-*)` tokens.
@@ -64,13 +64,13 @@ The React components were brought up to the primitive kiosk scale (touch-target 
 
 | Category | Status |
 |---|---|
-| Hardcoded text / missing i18n | ✅ Fixed (incl. AdminLogin, alerts→Modal, aria-labels, 23 locales) |
-| Dropdown naming/API confusion | ⬜ No change needed |
+| Hardcoded text / missing i18n |  Fixed (incl. AdminLogin, alerts→Modal, aria-labels, 23 locales) |
+| Dropdown naming/API confusion |  No change needed |
 | Modal/popup inconsistency | ◐ Close labels fixed; BaseModal deferred |
-| Size/spacing (tokens vs components) | ✅ Fixed (Button/Card/Input/Select aligned) |
-| Icon stroke-width/fill variance | ⬜ Deferred |
-| Hardcoded hex colors | ✅ Fixed (Aadhaar, Waveform, OfficeLocator; tokens added) |
-| Duplicate components (spinner) | ✅ Spinner removed; ⬜ keypad merge deferred |
+| Size/spacing (tokens vs components) |  Fixed (Button/Card/Input/Select aligned) |
+| Icon stroke-width/fill variance |  Deferred |
+| Hardcoded hex colors |  Fixed (Aadhaar, Waveform, OfficeLocator; tokens added) |
+| Duplicate components (spinner) |  Spinner removed;  keypad merge deferred |
 
 ## Resolution log (2026-06-27)
 

@@ -209,7 +209,7 @@ export default function ModeSelection() {
         </p>
         {autoDetected && (
           <span className="badge b-info" style={{ marginTop: 16, fontSize: 14, padding: '10px 18px' }}>
-            ♿ AUTO-DETECTED FROM AADHAAR: {autoDetected.toUpperCase()}
+             AUTO-DETECTED FROM AADHAAR: {autoDetected.toUpperCase()}
           </span>
         )}
       </div>

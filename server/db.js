@@ -261,7 +261,7 @@ function seedData() {
   const count = db.prepare('SELECT COUNT(*) as c FROM citizens').get();
   if (count.c > 0) return;
 
-  console.log('  📦  Seeding database...');
+  console.log('    Seeding database...');
 
   // ── Seed Citizens (Aadhaar mock data) ──
   const insertCitizen = db.prepare(`
@@ -363,5 +363,5 @@ function seedData() {
     importSchemesFromCSV(db);
   }
 
-  console.log('  ✅  Database seeded successfully');
+  console.log('    Database seeded successfully');
 }

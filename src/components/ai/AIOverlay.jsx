@@ -84,12 +84,12 @@ export default function AIOverlay() {
         {micPermission === 'denied' && !micBannerDismissed && (
           <div className="fixed bottom-[260px] left-8 right-8 z-[11000] max-w-[900px] mx-auto">
             <div className="bg-red-900 border border-red-500 rounded-xl px-4 py-3 flex items-center gap-3 shadow-xl">
-              <span className="text-red-200 text-sm flex-1">🎤 Microphone blocked — voice disabled. Touch input works.</span>
+              <span className="text-red-200 text-sm flex-1"> Microphone blocked — voice disabled. Touch input works.</span>
               <button
                 onClick={() => setMicBannerDismissed(true)}
                 className="text-red-300 hover:text-white text-lg font-bold leading-none flex-shrink-0"
                 aria-label={t('ai.dismissMicWarning')}
-              >✕</button>
+              ></button>
             </div>
           </div>
         )}
@@ -132,7 +132,7 @@ export default function AIOverlay() {
       <ListeningIndicator />
       {micPermission === 'denied' && (
         <div className="fixed bottom-[220px] left-1/2 -translate-x-1/2 z-[11000] bg-red-900 border border-red-500 rounded-xl px-8 py-5 text-4xl text-red-100 flex items-center gap-4 shadow-xl">
-          🎤 Microphone blocked — type your question instead.
+           Microphone blocked — type your question instead.
         </div>
       )}
 
@@ -240,13 +240,13 @@ export default function AIOverlay() {
                 onClick={confirmPendingAction}
                 className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold rounded-xl transition-colors active:scale-95"
               >
-                ✓ Confirm
+                 Confirm
               </button>
               <button
                 onClick={cancelPendingAction}
                 className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-xl transition-colors active:scale-95"
               >
-                ✗ Cancel
+                 Cancel
               </button>
             </div>
           </div>

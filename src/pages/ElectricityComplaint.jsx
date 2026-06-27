@@ -461,7 +461,7 @@ const ElectricityComplaint = () => {
                 </div>
                 {isRecording && (
                   <div className="mb-2 p-3 bg-amber-50 border border-amber-200 rounded-kiosk text-sm text-amber-700 animate-pulse">
-                    🎤 {t('gasComplaint.recording', 'Listening... Speak now')}
+                     {t('gasComplaint.recording', 'Listening... Speak now')}
                   </div>
                 )}
                 <TextArea

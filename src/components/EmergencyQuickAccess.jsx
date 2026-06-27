@@ -46,15 +46,15 @@ const KIOSK_SHELL_ROUTES = new Set([
  */
 
 const EMERGENCY_NUMBERS = [
-  { id: 'ambulance', number: '108', color: 'bg-red-600', icon: '🚑' },
-  { id: 'police', number: '100', color: 'bg-blue-700', icon: '🚔' },
-  { id: 'fire', number: '101', color: 'bg-orange-600', icon: '🚒' },
-  { id: 'womenHelpline', number: '1091', color: 'bg-pink-600', icon: '👩' },
-  { id: 'childHelpline', number: '1098', color: 'bg-green-600', icon: '👶' },
-  { id: 'disasterMgmt', number: '1078', color: 'bg-yellow-600', icon: '⚠️' },
-  { id: 'suicidePrevention', number: '9152987821', color: 'bg-purple-600', icon: '💜' },
-  { id: 'seniorCitizen', number: '14567', color: 'bg-teal-600', icon: '👴' },
-  { id: 'roadAccident', number: '1073', color: 'bg-gray-700', icon: '🚗' },
+  { id: 'ambulance', number: '108', color: 'bg-red-600', icon: '' },
+  { id: 'police', number: '100', color: 'bg-blue-700', icon: '' },
+  { id: 'fire', number: '101', color: 'bg-orange-600', icon: '' },
+  { id: 'womenHelpline', number: '1091', color: 'bg-pink-600', icon: '' },
+  { id: 'childHelpline', number: '1098', color: 'bg-green-600', icon: '' },
+  { id: 'disasterMgmt', number: '1078', color: 'bg-yellow-600', icon: '' },
+  { id: 'suicidePrevention', number: '9152987821', color: 'bg-purple-600', icon: '' },
+  { id: 'seniorCitizen', number: '14567', color: 'bg-teal-600', icon: '' },
+  { id: 'roadAccident', number: '1073', color: 'bg-gray-700', icon: '' },
 ];
 
 const EmergencyQuickAccess = () => {
@@ -100,7 +100,7 @@ const EmergencyQuickAccess = () => {
                 <Shield className="w-8 h-8" />
                 <div>
                   <h2 className="text-xl font-bold">
-                    🆘 {t('emergency.title')}
+                     {t('emergency.title')}
                   </h2>
                   <p className="text-sm opacity-90">
                     {t('emergency.noLoginRequired')}

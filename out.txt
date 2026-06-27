@@ -1,0 +1,3 @@
+'unt}} offices found",\n      "nearYou": " Near you",\n      "nearState": "Near: {{'
+'er",\n      "ownershipTransferWarning": " Ownership transfer requires supporting '
+'"SUVIDHA AI",\n      "listeningStatus": " Listening...",\n      "thinking": "NVIDI'

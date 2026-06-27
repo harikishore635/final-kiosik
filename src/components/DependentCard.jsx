@@ -58,7 +58,7 @@ const DependentCard = ({ dependent, onEdit, onRemove }) => {
           )}
           {dependent.disability && (
             <p className="text-xs text-purple-600 mt-1">
-              ♿ {t('familyProfile.disability')}: {dependent.disability}
+               {t('familyProfile.disability')}: {dependent.disability}
             </p>
           )}
         </div>

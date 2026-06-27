@@ -310,7 +310,7 @@ const Receipt = () => {
               <I d={ic.receipt} size={44} /> {thermalMode ? t('receipt.normalLayout', 'Normal Layout') : t('receipt.thermalLayout', 'Thermal Layout')}
             </button>
             <button className="btn btn-ghost" onClick={handleSendEmail} disabled={emailSent}>
-              <I d={ic.doc} size={44} /> {emailSent ? `✓ ${t('receipt.emailSent', 'Email Sent!')}` : t('receipt.email', 'Email')}
+              <I d={ic.doc} size={44} /> {emailSent ? ` ${t('receipt.emailSent', 'Email Sent!')}` : t('receipt.email', 'Email')}
             </button>
           </div>
 

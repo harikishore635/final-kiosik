@@ -392,9 +392,9 @@ const Electricity = () => {
                       value={formData.priority || ''}
                       onChange={e => handleInputChange('priority', e.target.value)}
                       options={[
-                        { value: 'emergency', label: '🔴 Emergency (24h TAT)' },
-                        { value: 'urgent', label: '🟡 Urgent (3 days TAT)' },
-                        { value: 'normal', label: '🟢 Normal (7–10 days TAT)' },
+                        { value: 'emergency', label: ' Emergency (24h TAT)' },
+                        { value: 'urgent', label: ' Urgent (3 days TAT)' },
+                        { value: 'normal', label: ' Normal (7–10 days TAT)' },
                       ]}
                       placeholder={t('electricity.selectPriority')}
                       required

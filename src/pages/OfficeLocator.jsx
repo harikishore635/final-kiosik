@@ -7,17 +7,17 @@ import { mockDelayRange } from '../utils/mockDelay';
 import { STATES, DISTRICTS, ALL_OFFICES } from '../data/officeData';
 
 const getCategories = (t) => [
-  { id: 'all',         label: t('officeLocator.catAll'),          icon: '🏛️' },
-  { id: 'hospital',    label: t('officeLocator.catHospitals'),    icon: '🏥' },
-  { id: 'municipal',   label: t('officeLocator.catMunicipal'),    icon: '🏢' },
-  { id: 'police',      label: t('officeLocator.catPolice'),       icon: '🚔' },
-  { id: 'electricity', label: t('officeLocator.catElectricity'),  icon: '⚡' },
-  { id: 'water',       label: t('officeLocator.catWaterBoard'),   icon: '💧' },
-  { id: 'revenue',     label: t('officeLocator.catRevenue'),      icon: '📋' },
-  { id: 'transport',   label: t('officeLocator.catTransport'),    icon: '🚌' },
-  { id: 'aadhaar',     label: t('officeLocator.catAadhaar'),      icon: '🪪' },
-  { id: 'welfare',     label: t('officeLocator.catWelfare'),      icon: '🤝' },
-  { id: 'fire',        label: t('officeLocator.catFireStation'),  icon: '🚒' },
+  { id: 'all',         label: t('officeLocator.catAll'),          icon: '' },
+  { id: 'hospital',    label: t('officeLocator.catHospitals'),    icon: '' },
+  { id: 'municipal',   label: t('officeLocator.catMunicipal'),    icon: '' },
+  { id: 'police',      label: t('officeLocator.catPolice'),       icon: '' },
+  { id: 'electricity', label: t('officeLocator.catElectricity'),  icon: '' },
+  { id: 'water',       label: t('officeLocator.catWaterBoard'),   icon: '' },
+  { id: 'revenue',     label: t('officeLocator.catRevenue'),      icon: '' },
+  { id: 'transport',   label: t('officeLocator.catTransport'),    icon: '' },
+  { id: 'aadhaar',     label: t('officeLocator.catAadhaar'),      icon: '' },
+  { id: 'welfare',     label: t('officeLocator.catWelfare'),      icon: '' },
+  { id: 'fire',        label: t('officeLocator.catFireStation'),  icon: '' },
 ];
 
 // Haversine distance in km
@@ -122,12 +122,12 @@ export default function OfficeLocator() {
         <div style={{ padding: '14px 14px 0', flexShrink: 0 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
             <div>
-              <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:'var(--slate-900)' }}>🏛️ {t('officeLocator.title')}</h2>
+              <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:'var(--slate-900)' }}> {t('officeLocator.title')}</h2>
               <p style={{ margin:0, fontSize:11, color:'var(--slate-500)', marginTop:1 }}>{t('officeLocator.subtitle')}</p>
             </div>
             {isMobile && (
               <button onClick={() => setSidebarOpen(false)}
-                style={{ background:'none', border:'none', fontSize:18, cursor:'pointer', color:'var(--slate-500)' }}>✕</button>
+                style={{ background:'none', border:'none', fontSize:18, cursor:'pointer', color:'var(--slate-500)' }}></button>
             )}
           </div>
 
@@ -145,12 +145,12 @@ export default function OfficeLocator() {
               transition:'all 0.15s'
             }}
           >
-            📍 {nearbyMode ? t('officeLocator.showingNearbyOffices') : t('officeLocator.showNearbyOffices')}
+             {nearbyMode ? t('officeLocator.showingNearbyOffices') : t('officeLocator.showNearbyOffices')}
           </button>
 
           {/* Search */}
           <div style={{ position:'relative', marginBottom:8 }}>
-            <span style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', fontSize:13, pointerEvents:'none' }}>🔍</span>
+            <span style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', fontSize:13, pointerEvents:'none' }}></span>
             <input type="text" className="sidebar-search"
               placeholder={t('officeLocator.searchPlaceholder')}
               value={searchQuery}
@@ -206,7 +206,7 @@ export default function OfficeLocator() {
         <div style={{ flex:1, overflowY:'auto', overflowX:'hidden', padding:'8px 10px 80px' }}>
           {!filteredOffices || filteredOffices.length === 0 ? (
             <div style={{ textAlign:'center', padding:'28px 16px', color:'var(--slate-400)' }}>
-              <div style={{ fontSize:28, marginBottom:6 }}>🗺️</div>
+              <div style={{ fontSize:28, marginBottom:6 }}></div>
               <p style={{ fontSize:13, margin:0 }}>{t('officeLocator.noOfficesFound')}</p>
               <button onClick={() => { setActiveCategory('all'); setSearchQuery(''); setNearbyMode(false); }}
                 style={{ marginTop:8, fontSize:12, color:'var(--accent-blue-400)', background:'none', border:'none', cursor:'pointer', textDecoration:'underline' }}>
@@ -304,7 +304,7 @@ function OfficeCard({ office, isActive, onNavigate }) {
         </div>
         <div style={{ flex:1 }} />
         <button className="nav-btn" onClick={() => onNavigate(office)}>
-          <span>🧭</span> Navigate
+          <span></span> Navigate
         </button>
       </div>
     </div>

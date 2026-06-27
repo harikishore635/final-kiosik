@@ -62,7 +62,7 @@ Error: page.waitForLoadState: Test timeout of 30000ms exceeded.
             - img [ref=e53]
         - 'button "Blind user: hold Aadhaar card to camera for hands-free login" [ref=e57] [cursor=pointer]':
           - img [ref=e58]
-          - text: ♿ Blind / Hands-free — Hold Aadhaar to Camera
+          - text:  Blind / Hands-free — Hold Aadhaar to Camera
         - generic [ref=e64]:
           - generic [ref=e65]: AVAILABLE IN 24 LANGUAGES · TAP TO CHANGE
           - generic [ref=e66]:

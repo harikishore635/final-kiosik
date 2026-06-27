@@ -195,17 +195,17 @@ function VAadhaar() {
 
       {/* Keypad — reach zone */}
       <div className="keypad" style={{ maxWidth: 560, margin: '0 auto', width: '100%' }}>
-        {[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map((k,i)=>(
+        {[1,2,3,4,5,6,7,8,9,'⌫',0,''].map((k,i)=>(
           <button key={i} style={{
-            background: k === '✓' ? 'var(--ok)' : (k === '⌫' ? 'var(--surface-2)' : 'white'),
-            color: k === '✓' ? 'white' : 'var(--indigo-900)',
-            border: k === '✓' ? 'none' : '2px solid var(--line)',
+            background: k === '' ? 'var(--ok)' : (k === '⌫' ? 'var(--surface-2)' : 'white'),
+            color: k === '' ? 'white' : 'var(--indigo-900)',
+            border: k === '' ? 'none' : '2px solid var(--line)',
           }}>{k}</button>
         ))}
       </div>
 
       <div style={{ marginTop: 32, padding: 22, background:'var(--saffron-100)', borderRadius: 18, border:'1.5px solid var(--saffron-300)', maxWidth: 720, margin: '32px auto 0' }}>
-        <div style={{ fontSize: 18, color:'var(--saffron-700)', fontWeight: 600 }}>🔒 Encrypted UIDAI lookup</div>
+        <div style={{ fontSize: 18, color:'var(--saffron-700)', fontWeight: 600 }}> Encrypted UIDAI lookup</div>
         <div className="meta" style={{ marginTop: 4 }}>Your data is used only for verification · DPDP Act 2023 compliant</div>
       </div>
     </VK>
@@ -251,11 +251,11 @@ function VAuth() {
         </div>
         {/* Keypad */}
         <div className="keypad" style={{ maxWidth: 480, margin: '0 auto' }}>
-          {[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map((k,i)=>(
+          {[1,2,3,4,5,6,7,8,9,'⌫',0,''].map((k,i)=>(
             <button key={i} style={{
-              background: k === '✓' ? 'var(--ok)' : (k === '⌫' ? 'var(--surface-2)' : 'white'),
-              color: k === '✓' ? 'white' : 'var(--indigo-900)',
-              border: k === '✓' ? 'none' : '2px solid var(--line)',
+              background: k === '' ? 'var(--ok)' : (k === '⌫' ? 'var(--surface-2)' : 'white'),
+              color: k === '' ? 'white' : 'var(--indigo-900)',
+              border: k === '' ? 'none' : '2px solid var(--line)',
             }}>{k}</button>
           ))}
         </div>
@@ -279,7 +279,7 @@ function VMode() {
       <div style={{ textAlign:'center', marginBottom: 32 }}>
         <h1 className="h2">Choose Your Experience</h1>
         <p className="body-l" style={{ marginTop: 12 }}>Select a mode that works best for you</p>
-        <span className="badge b-info" style={{ marginTop: 16, fontSize: 14, padding: '10px 18px' }}>♿ AUTO-DETECTED FROM AADHAAR: NORMAL</span>
+        <span className="badge b-info" style={{ marginTop: 16, fontSize: 14, padding: '10px 18px' }}> AUTO-DETECTED FROM AADHAAR: NORMAL</span>
       </div>
 
       <div style={{ display:'flex', flexDirection:'column', gap: 24, marginBottom: 32 }}>
@@ -332,7 +332,7 @@ function VHome() {
       {/* Welcome */}
       <div style={{ marginBottom: 32 }}>
         <div className="label-tag" style={{ color: 'var(--saffron-700)' }}>স্বাগতম · WELCOME BACK</div>
-        <h1 className="h2" style={{ marginTop: 8 }}>Hello, Aruna 👋</h1>
+        <h1 className="h2" style={{ marginTop: 8 }}>Hello, Aruna </h1>
         <p className="body-l" style={{ marginTop: 6 }}>How may we help you today?</p>
       </div>
 
@@ -415,7 +415,7 @@ function VForm() {
       <div style={{ display:'flex', alignItems:'center', gap: 10, marginBottom: 28 }}>
         {[1,2,3].map((n, i) => (
           <React.Fragment key={n}>
-            <div style={{ width: 48, height: 48, borderRadius:'50%', background: n <= 2 ? 'var(--indigo-700)':'var(--surface-2)', color: n <= 2 ? 'white':'var(--ink-500)', display:'grid', placeItems:'center', fontWeight: 700, fontSize: 20 }}>{n < 2 ? '✓' : n}</div>
+            <div style={{ width: 48, height: 48, borderRadius:'50%', background: n <= 2 ? 'var(--indigo-700)':'var(--surface-2)', color: n <= 2 ? 'white':'var(--ink-500)', display:'grid', placeItems:'center', fontWeight: 700, fontSize: 20 }}>{n < 2 ? '' : n}</div>
             {i < 2 && <div style={{ flex: 1, height: 4, background: n < 2 ? 'var(--indigo-700)':'var(--surface-2)', borderRadius: 2 }}/>}
           </React.Fragment>
         ))}
@@ -481,7 +481,7 @@ function VComplaint() {
             <label style={{ fontSize: 18, fontWeight: 600 }}>Category</label>
             <div className="field" style={{ marginTop: 8 }}>Street Light Outage ▾</div>
             <div style={{ display:'flex', gap: 10, marginTop: 10 }}>
-              <span className="badge b-info">🤖 AI · 92% MATCH</span>
+              <span className="badge b-info"> AI · 92% MATCH</span>
               <span className="badge b-warn">3 NEARBY DUPLICATES</span>
             </div>
           </div>
@@ -551,7 +551,7 @@ function VTracker() {
         <div className="tl">
           {steps.map((s, i) => (
             <div key={i} className="tl-item">
-              <div className={`tl-dot ${s.d}`}>{s.d === 'done' ? '✓' : i + 1}</div>
+              <div className={`tl-dot ${s.d}`}>{s.d === 'done' ? '' : i + 1}</div>
               <div style={{ flex: 1, paddingTop: 8 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', gap: 14 }}>
                   <div style={{ fontWeight: s.d === 'now' ? 800 : 700, fontSize: 24, color: s.d === '' ? 'var(--ink-500)' : 'var(--ink-900)' }}>{s.t}</div>
@@ -700,10 +700,10 @@ function VLocator() {
             <circle r="36" fill="var(--indigo-700)" stroke="white" strokeWidth="4"/>
             <text textAnchor="middle" y="8" fill="white" fontSize="20" fontWeight="800" fontFamily="Plus Jakarta Sans">YOU</text>
           </g>
-          <g transform="translate(620, 180)"><circle r="22" fill="var(--dept-elec)" stroke="white" strokeWidth="3"/><text textAnchor="middle" y="7" fill="white" fontSize="20">⚡</text></g>
-          <g transform="translate(220, 420)"><circle r="22" fill="var(--dept-water)" stroke="white" strokeWidth="3"/><text textAnchor="middle" y="7" fill="white" fontSize="20">💧</text></g>
-          <g transform="translate(720, 440)"><circle r="22" fill="var(--dept-gas)" stroke="white" strokeWidth="3"/><text textAnchor="middle" y="7" fill="white" fontSize="20">🔥</text></g>
-          <g transform="translate(340, 380)"><circle r="22" fill="var(--indigo-500)" stroke="white" strokeWidth="3"/><text textAnchor="middle" y="7" fill="white" fontSize="20">★</text></g>
+          <g transform="translate(620, 180)"><circle r="22" fill="var(--dept-elec)" stroke="white" strokeWidth="3"/><text textAnchor="middle" y="7" fill="white" fontSize="20"></text></g>
+          <g transform="translate(220, 420)"><circle r="22" fill="var(--dept-water)" stroke="white" strokeWidth="3"/><text textAnchor="middle" y="7" fill="white" fontSize="20"></text></g>
+          <g transform="translate(720, 440)"><circle r="22" fill="var(--dept-gas)" stroke="white" strokeWidth="3"/><text textAnchor="middle" y="7" fill="white" fontSize="20"></text></g>
+          <g transform="translate(340, 380)"><circle r="22" fill="var(--indigo-500)" stroke="white" strokeWidth="3"/><text textAnchor="middle" y="7" fill="white" fontSize="20"></text></g>
         </svg>
       </div>
 

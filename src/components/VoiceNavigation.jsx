@@ -576,7 +576,7 @@ const VoiceNavigation = () => {
     <div className="fixed bottom-[260px] left-8 z-50 no-print" role="region" aria-label="Voice navigation">
       {isBlindMode && (
         <div className="bg-purple-700 text-white px-3 py-2 rounded-xl shadow-xl text-xs font-bold animate-pulse">
-          🔊 {t('voice.modeActive', 'Voice Mode Active')}
+           {t('voice.modeActive', 'Voice Mode Active')}
         </div>
       )}
 

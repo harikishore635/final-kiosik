@@ -85,9 +85,9 @@ Error: page.waitForLoadState: Test timeout of 30000ms exceeded.
           - button "Digit 9" [ref=e113] [cursor=pointer]: "9"
           - button "Delete" [ref=e114] [cursor=pointer]: ⌫
           - button "Digit 0" [ref=e115] [cursor=pointer]: "0"
-          - button "Submit" [ref=e116] [cursor=pointer]: ✓
+          - button "Submit" [ref=e116] [cursor=pointer]: 
         - generic [ref=e117]:
-          - generic [ref=e118]: 🔒 Encrypted UIDAI lookup
+          - generic [ref=e118]:  Encrypted UIDAI lookup
           - generic [ref=e119]: Your data is used only for verification · DPDP Act 2023 compliant
       - generic [ref=e120]:
         - button "A+ Larger text" [ref=e121] [cursor=pointer]:

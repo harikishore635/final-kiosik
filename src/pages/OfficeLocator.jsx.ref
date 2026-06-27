@@ -3,17 +3,17 @@ import RealtimeNavigationMap from '../components/RealtimeNavigationMap';
 import { STATES, DISTRICTS, ALL_OFFICES } from '../data/officeData';
 
 export const CATEGORIES = [
-  { id: 'all',         label: 'All',          icon: '🏛️' },
-  { id: 'hospital',    label: 'Hospitals',    icon: '🏥' },
-  { id: 'municipal',   label: 'Municipal',    icon: '🏢' },
-  { id: 'police',      label: 'Police',       icon: '🚔' },
-  { id: 'electricity', label: 'Electricity',  icon: '⚡' },
-  { id: 'water',       label: 'Water Board',  icon: '💧' },
-  { id: 'revenue',     label: 'Revenue',      icon: '📋' },
-  { id: 'transport',   label: 'Transport',    icon: '🚌' },
-  { id: 'aadhaar',     label: 'Aadhaar',      icon: '🪪' },
-  { id: 'welfare',     label: 'Welfare',      icon: '🤝' },
-  { id: 'fire',        label: 'Fire Station', icon: '🚒' },
+  { id: 'all',         label: 'All',          icon: '' },
+  { id: 'hospital',    label: 'Hospitals',    icon: '' },
+  { id: 'municipal',   label: 'Municipal',    icon: '' },
+  { id: 'police',      label: 'Police',       icon: '' },
+  { id: 'electricity', label: 'Electricity',  icon: '' },
+  { id: 'water',       label: 'Water Board',  icon: '' },
+  { id: 'revenue',     label: 'Revenue',      icon: '' },
+  { id: 'transport',   label: 'Transport',    icon: '' },
+  { id: 'aadhaar',     label: 'Aadhaar',      icon: '' },
+  { id: 'welfare',     label: 'Welfare',      icon: '' },
+  { id: 'fire',        label: 'Fire Station', icon: '' },
 ];
 
 // Haversine distance in km
@@ -108,12 +108,12 @@ export default function OfficeLocator() {
         <div style={{ padding: '14px 14px 0', flexShrink: 0 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
             <div>
-              <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:'#0f172a' }}>🏛️ Office Locator</h2>
+              <h2 style={{ margin:0, fontSize:16, fontWeight:700, color:'#0f172a' }}> Office Locator</h2>
               <p style={{ margin:0, fontSize:11, color:'#64748b', marginTop:1 }}>Find & navigate to government offices</p>
             </div>
             {isMobile && (
               <button onClick={() => setSidebarOpen(false)}
-                style={{ background:'none', border:'none', fontSize:18, cursor:'pointer', color:'#64748b' }}>✕</button>
+                style={{ background:'none', border:'none', fontSize:18, cursor:'pointer', color:'#64748b' }}></button>
             )}
           </div>
 
@@ -131,12 +131,12 @@ export default function OfficeLocator() {
               transition:'all 0.15s'
             }}
           >
-            📍 {nearbyMode ? 'Showing Nearby Offices' : 'Show Nearby Offices'}
+             {nearbyMode ? 'Showing Nearby Offices' : 'Show Nearby Offices'}
           </button>
 
           {/* Search */}
           <div style={{ position:'relative', marginBottom:8 }}>
-            <span style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', fontSize:13, pointerEvents:'none' }}>🔍</span>
+            <span style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', fontSize:13, pointerEvents:'none' }}></span>
             <input type="text" className="sidebar-search"
               placeholder="Search offices, addresses…"
               value={searchQuery}
@@ -183,7 +183,7 @@ export default function OfficeLocator() {
               <strong style={{ color:'#1d4ed8' }}>{filteredOffices?.length ?? 0}</strong> offices found
             </span>
             <span style={{ fontSize:11, color:'#94a3b8' }}>
-              {nearbyMode ? '📍 Near you' : `Near: ${STATES.find(s => s.code === selectedState)?.name}`}
+              {nearbyMode ? ' Near you' : `Near: ${STATES.find(s => s.code === selectedState)?.name}`}
             </span>
           </div>
         </div>
@@ -192,7 +192,7 @@ export default function OfficeLocator() {
         <div style={{ flex:1, overflowY:'auto', overflowX:'hidden', padding:'8px 10px 80px' }}>
           {!filteredOffices || filteredOffices.length === 0 ? (
             <div style={{ textAlign:'center', padding:'28px 16px', color:'#94a3b8' }}>
-              <div style={{ fontSize:28, marginBottom:6 }}>🗺️</div>
+              <div style={{ fontSize:28, marginBottom:6 }}></div>
               <p style={{ fontSize:13, margin:0 }}>No offices found.</p>
               <button onClick={() => { setActiveCategory('all'); setSearchQuery(''); setNearbyMode(false); }}
                 style={{ marginTop:8, fontSize:12, color:'#3b82f6', background:'none', border:'none', cursor:'pointer', textDecoration:'underline' }}>
@@ -286,7 +286,7 @@ function OfficeCard({ office, isActive, onNavigate }) {
         </div>
         <div style={{ flex:1 }} />
         <button className="nav-btn" onClick={() => onNavigate(office)}>
-          <span>🧭</span> Navigate
+          <span></span> Navigate
         </button>
       </div>
     </div>

@@ -65,14 +65,14 @@ const STT_LANG_MAP = {
 };
 
 const PROVIDER_LABELS = {
-  'suvidha-ai': '✦ SUVIDHA AI',
-  'sarvam-105b': '✦ SUVIDHA AI',
-  'sarvam-nim': '✦ SUVIDHA AI',
-  'llama-nim': '✦ SUVIDHA AI',
-  'NVIDIA NIM · Nemotron': '✦ SUVIDHA AI',
-  'offline_mode': '✦ SUVIDHA AI',
-  'huggingface': '✦ SUVIDHA AI',
-  'none': '✦ SUVIDHA AI',
+  'suvidha-ai': ' SUVIDHA AI',
+  'sarvam-105b': ' SUVIDHA AI',
+  'sarvam-nim': ' SUVIDHA AI',
+  'llama-nim': ' SUVIDHA AI',
+  'NVIDIA NIM · Nemotron': ' SUVIDHA AI',
+  'offline_mode': ' SUVIDHA AI',
+  'huggingface': ' SUVIDHA AI',
+  'none': ' SUVIDHA AI',
 };
 
 // Conversation history for context window

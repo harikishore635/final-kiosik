@@ -335,7 +335,7 @@ const ConsumerProfile = () => {
                   </div>
                 </div>
                 <div className="flex items-start gap-2 mb-4 px-1">
-                  <span className="text-amber-500 mt-0.5">⚠</span>
+                  <span className="text-amber-500 mt-0.5"></span>
                   <p className="text-kiosk-sm text-gray-500">
                     {t('profile.ownershipTransferWarning')}
                   </p>

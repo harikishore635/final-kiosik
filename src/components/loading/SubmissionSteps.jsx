@@ -32,7 +32,7 @@ export default function SubmissionSteps({ step, labels }) {
                   fontWeight: 700, flexShrink: 0,
                 }}
               >
-                ✓
+                
               </span>
             )}
             {isActive && (

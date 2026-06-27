@@ -453,7 +453,7 @@ export default function Login() {
               </div>
             </>) : (<>
               <div className="card" style={{ padding: 32, marginBottom: 24, background: 'color-mix(in oklab, var(--ok) 8%, white)', borderColor: 'var(--ok)' }}>
-                <div style={{ fontWeight: 800, fontSize: 24 }}>✅ {altRecord?.name}</div>
+                <div style={{ fontWeight: 800, fontSize: 24 }}> {altRecord?.name}</div>
                 <div style={{ marginTop: 8, fontSize: 20, color: 'var(--ink-500)' }}>
                   OTP sent to ****{altRecord?.mobile?.slice(-4)} · {altRecord?.dept}
                 </div>
@@ -505,7 +505,7 @@ export default function Login() {
               </div>
             </>) : (<>
               <div className="card" style={{ padding: 32, marginBottom: 24, background: 'color-mix(in oklab, var(--ok) 8%, white)', borderColor: 'var(--ok)' }}>
-                <div style={{ fontWeight: 800, fontSize: 24 }}>✅ {altRecord?.name}</div>
+                <div style={{ fontWeight: 800, fontSize: 24 }}> {altRecord?.name}</div>
                 <div style={{ marginTop: 8, fontSize: 20, color: 'var(--ink-500)' }}>
                   OTP sent to ****{altRecord?.mobile?.slice(-4)} · {altRecord?.dept}
                 </div>

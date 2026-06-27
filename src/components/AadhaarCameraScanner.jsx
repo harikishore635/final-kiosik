@@ -423,7 +423,7 @@ If any field is not visible, use empty string.`;
           }}
           aria-label={t('aadhaar.closeScanner')}
         >
-          ✕ Cancel / Use Keypad Instead
+           Cancel / Use Keypad Instead
         </button>
       )}
 

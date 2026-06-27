@@ -3,7 +3,7 @@
 
 ---
 
-## Overall Score: **73 / 100** — 🟡 Good (Partial → Good)
+## Overall Score: **73 / 100** —  Good (Partial → Good)
 
 Strong AI/voice/accessibility stack. Critical routing bugs break 3 major flows in demo. Fix those first.
 
@@ -13,32 +13,32 @@ Strong AI/voice/accessibility stack. Critical routing bugs break 3 major flows i
 
 | # | Module | Score | Status |
 |---|--------|-------|--------|
-| 1 | Home / Language & Org Selection | 85 | 🟡 Good |
-| 2 | Electricity: Login & Auth | 72 | 🟡 Good |
-| 3 | Electricity: New Connection & Load Extension | 58 | 🟠 Partial |
-| 4 | Electricity: Meter Replacement & Shifting | 55 | 🟠 Partial |
-| 5 | Electricity: Complaint Registration | 82 | 🟡 Good |
-| 6 | Electricity: Credential Management | **0 (BROKEN ROUTE)** | 🔴 |
-| 7 | Electricity: Track Requests | 74 | 🟡 Good |
-| 8 | Electricity: Receipt Generation | 72 | 🟡 Good |
-| 9 | Gas: Login & Auth | 50 | 🟠 Partial |
-| 10 | Gas: Main Menu & Navigation | 95 | ✅ Excellent |
-| 11 | Gas: New Connection / Change Request | 60 | 🟠 Partial |
-| 12 | Gas: Register Complaint | **0 (BROKEN ROUTE)** | 🔴 |
-| 13 | Gas: Track Complaint/Request | 80 | 🟡 Good |
-| 14 | Gas: Edit Credentials | **0 (BROKEN ROUTE)** | 🔴 |
-| 15 | Gas: Receipt Generation | 72 | 🟡 Good |
-| 16 | Municipality: Login & Auth | 62 | 🟠 Partial |
-| 17 | Municipality: New Water Connection | 62 | 🟠 Partial |
-| 18 | Municipality: Register Grievances | 90 | ✅ Excellent |
-| 19 | Municipality: Track Request/Complaint | 74 | 🟡 Good |
-| 20 | Municipality: Receipt Generation | 72 | 🟡 Good |
-| 21 | Municipality: Credential Management | **0 (BROKEN ROUTE)** | 🔴 |
-| 22 | Cross-Cutting & Non-Functional | 80 | 🟡 Good |
+| 1 | Home / Language & Org Selection | 85 |  Good |
+| 2 | Electricity: Login & Auth | 72 |  Good |
+| 3 | Electricity: New Connection & Load Extension | 58 |  Partial |
+| 4 | Electricity: Meter Replacement & Shifting | 55 |  Partial |
+| 5 | Electricity: Complaint Registration | 82 |  Good |
+| 6 | Electricity: Credential Management | **0 (BROKEN ROUTE)** |  |
+| 7 | Electricity: Track Requests | 74 |  Good |
+| 8 | Electricity: Receipt Generation | 72 |  Good |
+| 9 | Gas: Login & Auth | 50 |  Partial |
+| 10 | Gas: Main Menu & Navigation | 95 |  Excellent |
+| 11 | Gas: New Connection / Change Request | 60 |  Partial |
+| 12 | Gas: Register Complaint | **0 (BROKEN ROUTE)** |  |
+| 13 | Gas: Track Complaint/Request | 80 |  Good |
+| 14 | Gas: Edit Credentials | **0 (BROKEN ROUTE)** |  |
+| 15 | Gas: Receipt Generation | 72 |  Good |
+| 16 | Municipality: Login & Auth | 62 |  Partial |
+| 17 | Municipality: New Water Connection | 62 |  Partial |
+| 18 | Municipality: Register Grievances | 90 |  Excellent |
+| 19 | Municipality: Track Request/Complaint | 74 |  Good |
+| 20 | Municipality: Receipt Generation | 72 |  Good |
+| 21 | Municipality: Credential Management | **0 (BROKEN ROUTE)** |  |
+| 22 | Cross-Cutting & Non-Functional | 80 |  Good |
 
 ---
 
-## 🔴 CRITICAL BUGS — Fix Before Demo
+##  CRITICAL BUGS — Fix Before Demo
 
 ### BUG 1: `/consumer-profile` route does not exist (breaks ALL departments)
 **Files:** `ElectricityMenu.jsx:48`, `GasMenu.jsx:66`, `MunicipalMenu.jsx:66`, `Municipal.jsx:94`, etc.
@@ -113,7 +113,7 @@ onClick={() => setUserMode(userMode === 'blind' ? 'normal' : 'blind')}
 
 ---
 
-## 🟠 Missing Features — Add to Max Out Score
+##  Missing Features — Add to Max Out Score
 
 ### HIGH IMPACT (do these)
 
@@ -172,15 +172,15 @@ This is a copy-paste job — 15 minutes of work, +10 judge impression points.
 
 ## Strengths
 
-- ✅ **AI Chatbot** is excellent — multilingual suggestions by context, voice STT, Sarvam API + NVIDIA NIM fallback
-- ✅ **Vertical kiosk layout** is purpose-built (1080×1920, VK component, large touch targets, `touch-manipulation`)
-- ✅ **24-language support** on landing — Assamese locale confirmed with 278 lines of translations
-- ✅ **Accessibility stack** is solid — blind/elderly modes, ScreenReaderOverlay, reduced-motion detection
-- ✅ **Municipal grievance** covers all 8 SRS categories exactly
-- ✅ **Track status** — 3 search types (Request ID, Ticket ID, Mobile), SLA countdown, officer details
-- ✅ **Admin dashboard** — 7 admin pages (Super, KioskOps, Department, Officer, Security, Audit)
-- ✅ **Security utilities** — XSS sanitization, CSRF in security.js
-- ✅ **Receipt** — thermal mode, print/email/SMS buttons, multi-receipt navigation
+-  **AI Chatbot** is excellent — multilingual suggestions by context, voice STT, Sarvam API + NVIDIA NIM fallback
+-  **Vertical kiosk layout** is purpose-built (1080×1920, VK component, large touch targets, `touch-manipulation`)
+-  **24-language support** on landing — Assamese locale confirmed with 278 lines of translations
+-  **Accessibility stack** is solid — blind/elderly modes, ScreenReaderOverlay, reduced-motion detection
+-  **Municipal grievance** covers all 8 SRS categories exactly
+-  **Track status** — 3 search types (Request ID, Ticket ID, Mobile), SLA countdown, officer details
+-  **Admin dashboard** — 7 admin pages (Super, KioskOps, Department, Officer, Security, Audit)
+-  **Security utilities** — XSS sanitization, CSRF in security.js
+-  **Receipt** — thermal mode, print/email/SMS buttons, multi-receipt navigation
 
 ---
 
@@ -188,17 +188,17 @@ This is a copy-paste job — 15 minutes of work, +10 judge impression points.
 
 | Priority | Fix | Time | Impact |
 |----------|-----|------|--------|
-| 🔴 P0 | Add `/consumer-profile` route in App.jsx | 2 min | Unbreaks 4 modules |
-| 🔴 P0 | Fix GasMenu `/gas-complaint` → `/gas/complaint` | 1 min | Unbreaks Gas Complaint |
-| 🔴 P0 | Fix MunicipalMenu `/property-tax` → `/municipal/property-tax` | 1 min | Unbreaks Property Tax |
-| 🔴 P0 | Wire Landing "A+ Larger" and "Voice mode" buttons | 10 min | Judges see landing first |
-| 🟠 P1 | Add voice input to MunicipalGrievance | 15 min | Copy from ElectricityComplaint |
-| 🟠 P1 | Add category chips to GasComplaint | 30 min | Parity with Electricity |
-| 🟠 P1 | Fix Download button on TrackStatus | 5 min | Dead button is bad UX |
-| 🟡 P2 | Add CA Number login option for Gas | 45 min | SRS Module 9 requirement |
-| 🟡 P2 | Add WhatsApp button in Receipt | 10 min | SRS Gas Module 12 |
-| 🟡 P2 | Add escalation button when SLA breached | 20 min | Wow factor |
+|  P0 | Add `/consumer-profile` route in App.jsx | 2 min | Unbreaks 4 modules |
+|  P0 | Fix GasMenu `/gas-complaint` → `/gas/complaint` | 1 min | Unbreaks Gas Complaint |
+|  P0 | Fix MunicipalMenu `/property-tax` → `/municipal/property-tax` | 1 min | Unbreaks Property Tax |
+|  P0 | Wire Landing "A+ Larger" and "Voice mode" buttons | 10 min | Judges see landing first |
+|  P1 | Add voice input to MunicipalGrievance | 15 min | Copy from ElectricityComplaint |
+|  P1 | Add category chips to GasComplaint | 30 min | Parity with Electricity |
+|  P1 | Fix Download button on TrackStatus | 5 min | Dead button is bad UX |
+|  P2 | Add CA Number login option for Gas | 45 min | SRS Module 9 requirement |
+|  P2 | Add WhatsApp button in Receipt | 10 min | SRS Gas Module 12 |
+|  P2 | Add escalation button when SLA breached | 20 min | Wow factor |
 
 ---
 
-## Projected Score After P0 + P1 Fixes: **~84 / 100** 🟢
+## Projected Score After P0 + P1 Fixes: **~84 / 100** 

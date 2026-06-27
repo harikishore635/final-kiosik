@@ -312,26 +312,26 @@ const hfToken   = process.env.HF_TOKEN;
 const fast2smsKey = process.env.FAST2SMS_API_KEY;
 
 if (!sarvamKey || sarvamKey === 'test-key' || sarvamKey.length < 10) {
-  console.warn('\n  ⚠️  SARVAM_API_KEY not configured. Voice features (TTS, STT, translation) will be limited.\n');
+  console.warn('\n    SARVAM_API_KEY not configured. Voice features (TTS, STT, translation) will be limited.\n');
 }
 if (!nvidiaKey) {
-  console.warn('  ⚠️  NVIDIA_API_KEY not set. Sarvam-1 + Llama chat will be disabled. Set for best AI quality.\n');
+  console.warn('    NVIDIA_API_KEY not set. Sarvam-1 + Llama chat will be disabled. Set for best AI quality.\n');
 }
 if (!hfToken) {
-  console.warn('  ℹ️  HF_TOKEN not set. HuggingFace fallback chat disabled.\n');
+  console.warn('  ℹ  HF_TOKEN not set. HuggingFace fallback chat disabled.\n');
 }
 if (!fast2smsKey) {
-  console.warn('  ⚠️  FAST2SMS_API_KEY not set. Real SMS OTP delivery will fail.\n');
+  console.warn('    FAST2SMS_API_KEY not set. Real SMS OTP delivery will fail.\n');
 }
 
 httpServer.listen(PORT, () => {
-  console.log(`\n  ✅  SUVIDHA Backend v2.0 running on http://localhost:${PORT}`);
-  console.log(`  🔒  Security: Helmet CSP + JWT + Rate limiting + Input sanitization + Audit logging`);
-  console.log(`  🤖  AI Chat: Sarvam-1 (NVIDIA NIM) → Llama-3.1-8b → Gemma-2 fallback`);
-  console.log(`  🎙️  Voice: Sarvam AI TTS/STT (12 Indian languages) + Barge-in detection`);
-  console.log(`  📡  Sarvam AI: ${sarvamKey && sarvamKey !== 'test-key' ? '✅ CONFIGURED' : '❌ NOT CONFIGURED'}`);
-  console.log(`  🟢  NVIDIA NIM: ${nvidiaKey ? '✅ CONFIGURED' : '❌ NOT SET'}`);
-  console.log(`  📨  Fast2SMS OTP: ${fast2smsKey ? '✅ CONFIGURED' : '❌ NOT SET'}\n`);
+  console.log(`\n    SUVIDHA Backend v2.0 running on http://localhost:${PORT}`);
+  console.log(`    Security: Helmet CSP + JWT + Rate limiting + Input sanitization + Audit logging`);
+  console.log(`    AI Chat: Sarvam-1 (NVIDIA NIM) → Llama-3.1-8b → Gemma-2 fallback`);
+  console.log(`    Voice: Sarvam AI TTS/STT (12 Indian languages) + Barge-in detection`);
+  console.log(`    Sarvam AI: ${sarvamKey && sarvamKey !== 'test-key' ? ' CONFIGURED' : ' NOT CONFIGURED'}`);
+  console.log(`    NVIDIA NIM: ${nvidiaKey ? ' CONFIGURED' : ' NOT SET'}`);
+  console.log(`    Fast2SMS OTP: ${fast2smsKey ? ' CONFIGURED' : ' NOT SET'}\n`);
 });
 
 export default app;

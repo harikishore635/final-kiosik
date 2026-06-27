@@ -120,7 +120,7 @@ export default function Home() {
 
   const userName = sessionStorage.getItem('userName') || '';
   const firstName = userName.split(' ')[0];
-  const greetingMode = userMode === 'elderly' ? '🙏' : '👋';
+  const greetingMode = userMode === 'elderly' ? '' : '';
 
   return (
     <VK bg="var(--cream)">

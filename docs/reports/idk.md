@@ -140,25 +140,3 @@ Best live novelty demo:
 
 This is the clearest "judge reaction" moment because it demonstrates accessibility, AI/voice, and kiosk usability in one short action.
 
-## Evaluation Estimate
-
-The provided PDF is a requirements/specification document, not a numeric scoring rubric. Based on the spec coverage, the project is strongest in UI/UX, accessibility, security demonstration, tracking, receipts, offline support, and innovation. It is weaker where the PDF expects department-specific workflows with specialized fields for every electricity/gas/municipal sub-service.
-
-Estimated score after the quick fixes:
-
-| Category | Estimate | Reason |
-|---|---:|---|
-| UI/UX | 8.5/10 | Kiosk-focused, multilingual, accessible, polished service navigation. |
-| Architecture | 8/10 | Clear React/Express/offline/backend split with route guards and service worker. |
-| Feature Coverage | 7/10 | Broad coverage, but several department flows are generic rather than fully specialized. |
-| Security | 7.5/10 | Strong demo controls and threat model; not production-certified. |
-| Extra Innovation | 9/10 | Voice, barge-in, QR upload, auto accessibility, offline-first, emergency layer. |
-
-Overall estimated score: 40/50 to 42/50, depending on how much judges reward innovation versus exact PDF workflow matching.
-
-Fastest remaining improvements before presentation:
-
-- Add 1-2 department-specific fields to Electricity new connection/load extension.
-- Add gas CA/legacy number login label or flow stub.
-- Add municipal grievance categories exactly matching the PDF.
-- Mention during the demo that the service grid intentionally covers more than the three required departments.

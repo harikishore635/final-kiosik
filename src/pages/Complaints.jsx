@@ -233,7 +233,7 @@ const Complaints = () => {
           {/* AI Smart Classification Badge */}
           <div className="mt-3 inline-flex items-center space-x-2 bg-purple-50 px-4 py-2 rounded-full">
             <span className="text-sm text-purple-700 font-medium">
-              🤖 AI-Powered Auto-Classification & Smart Routing
+               AI-Powered Auto-Classification & Smart Routing
             </span>
           </div>
         </div>
@@ -289,14 +289,14 @@ const Complaints = () => {
                 Complaint Type: {t(`complaints.${selectedType}`)}
               </p>
               <p className="text-xs text-purple-600 mt-1">
-                🤖 AI will auto-route this to the relevant municipal department
+                 AI will auto-route this to the relevant municipal department
               </p>
             </div>
 
             {/* AI Duplicate Detection Notice */}
             <div className="mb-6 p-3 bg-blue-50 rounded-kiosk border border-blue-200">
               <div className="flex items-start space-x-2">
-                <span className="text-lg">🔍</span>
+                <span className="text-lg"></span>
                 <div>
                   <p className="text-xs font-semibold text-blue-800">Smart Duplicate Detection</p>
                   <p className="text-xs text-blue-600">
