@@ -200,7 +200,7 @@ export default function Landing() {
               borderRadius: 18,
               border: '2px dashed var(--indigo-300)',
               background: 'color-mix(in oklab, var(--indigo-700) 5%, white)',
-              fontSize: 32,
+              fontSize: 36,
               minHeight: 110,
               gap: 16,
               justifyContent: 'center',
@@ -208,8 +208,8 @@ export default function Landing() {
             aria-label="Blind user: hold Aadhaar card to camera for hands-free login"
             onClick={() => setShowCamera(true)}
           >
-            <I d={ic.qr} size={28} />
-            {t('landing.blindCameraScan', '♿ Blind / Hands-free — Hold Aadhaar to Camera')}
+            <I d={ic.qr} size={32} />
+            {t('landing.blindCameraScan', 'Blind / Hands-free — Hold Aadhaar to Camera')}
           </button>
         </div>
 

@@ -148,10 +148,17 @@
       "citizenLogin": "Citizen Login",
       "citizenDesc": "Full access with Aadhaar verification",
       "aadhaarVerified": "Aadhaar Verified",
-      "blindCameraScan": "♿ Blind / Hands-free — Hold Aadhaar to Camera",
+      "blindCameraScan": "Blind / Hands-free — Hold Aadhaar to Camera",
       "heroLine": "How may we\nhelp you\ntoday?",
       "langStrip": "AVAILABLE IN 24 LANGUAGES · TAP TO CHANGE",
       "welcomeTag": "WELCOME · স্বাগতম · स्वागत है"
+    },
+    "aadhaarConsent": {
+      "title": "Aadhaar Verification Consent",
+      "message": "SUVIDHA will use your Aadhaar QR code to verify your identity and retrieve the required details. Do you wish to continue?",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "processing": "Processing..."
     },
     "form": {
       "name": "Full Name",

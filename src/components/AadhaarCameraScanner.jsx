@@ -255,71 +255,56 @@ If any field is not visible, use empty string.`;
     return (
       <div style={{
         position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgba(0,0,0,0.92)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: 32,
-      }} role="dialog" aria-modal="true" aria-label="Aadhaar consent dialog">
+        background: 'rgba(15,23,42,0.6)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24,
+      }} role="dialog" aria-modal="true" aria-label={t('aadhaarConsent.title', 'Aadhaar Verification Consent')}>
 
         <div style={{
-          background: 'var(--slate-800)', borderRadius: 24, padding: 40,
-          maxWidth: 560, width: '100%', textAlign: 'center',
-          border: '2px solid var(--slate-700)',
+          background: 'white', borderRadius: 28, padding: '56px 56px',
+          maxWidth: 760, minHeight: 480, width: '100%', textAlign: 'center',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          border: '1px solid var(--indigo-100)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.18)',
         }}>
-          <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
-          <h2 style={{ color: 'white', fontSize: 28, fontWeight: 800, marginBottom: 12 }}>
-            Aadhaar Verification Consent
+          <h2 style={{ color: 'var(--indigo-900)', fontSize: 38, fontWeight: 800, marginBottom: 24, lineHeight: 1.25 }}>
+            {t('aadhaarConsent.title', 'Aadhaar Verification Consent')}
           </h2>
-          <p style={{ color: 'var(--slate-400)', fontSize: 18, lineHeight: 1.7, marginBottom: 24 }}>
-            SUVIDHA will read your <strong style={{ color: 'white' }}>name, gender, date of birth,
-            and masked Aadhaar number (last 4 digits only)</strong> from your Offline e-KYC QR code.
+          <p style={{ color: 'var(--slate-600)', fontSize: 24, lineHeight: 1.6, marginBottom: 40 }}>
+            {t('aadhaarConsent.message', 'SUVIDHA will use your Aadhaar QR code to verify your identity and retrieve the required details. Do you wish to continue?')}
           </p>
 
-          <div style={{
-            background: 'var(--slate-900)', borderRadius: 16, padding: 20, marginBottom: 28,
-            textAlign: 'left', fontSize: 16, color: 'var(--slate-400)', lineHeight: 1.8,
-          }}>
-            <div>✅ &nbsp;Data is <strong style={{ color: 'white' }}>not stored</strong> — processed in memory only</div>
-            <div>✅ &nbsp;Session token expires in <strong style={{ color: 'white' }}>2 hours</strong></div>
-            <div>✅ &nbsp;QR signature verified against <strong style={{ color: 'white' }}>UIDAI public key</strong></div>
-            <div>✅ &nbsp;Compliant with <strong style={{ color: 'white' }}>DPDP Act 2023</strong></div>
-          </div>
-
           {errorMsg && (
-            <div style={{ color: 'var(--accent-red-300)', marginBottom: 16, fontSize: 16 }}>{errorMsg}</div>
+            <div style={{ color: 'var(--accent-red-500)', marginBottom: 20, fontSize: 18 }}>{errorMsg}</div>
           )}
 
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
+            <button
+              onClick={handleClose}
+              style={{
+                flex: 1, padding: '26px 0',
+                background: 'var(--gray-100)', color: 'var(--slate-700)',
+                border: '1px solid var(--gray-200)', borderRadius: 16,
+                fontSize: 32, fontWeight: 700, cursor: 'pointer',
+              }}
+              aria-label={t('aadhaarConsent.cancel', 'Cancel')}
+            >
+              {t('aadhaarConsent.cancel', 'Cancel')}
+            </button>
             <button
               onClick={handleConsent}
               disabled={consentLoading}
               style={{
-                padding: '16px 36px',
-                background: consentLoading ? 'var(--gray-700)' : 'var(--accent-blue)',
-                color: 'white', border: 'none', borderRadius: 14,
-                fontSize: 20, fontWeight: 700, cursor: consentLoading ? 'wait' : 'pointer',
+                flex: 1, padding: '26px 0',
+                background: consentLoading ? 'var(--gray-400)' : 'var(--indigo-700)',
+                color: 'white', border: 'none', borderRadius: 16,
+                fontSize: 32, fontWeight: 800, cursor: consentLoading ? 'wait' : 'pointer',
               }}
-              aria-label="I agree — open camera to scan Aadhaar QR"
+              aria-label={t('aadhaarConsent.continue', 'Continue')}
             >
-              {consentLoading ? '⏳ Processing...' : '✅ I Agree — Scan QR'}
-            </button>
-            <button
-              onClick={handleClose}
-              style={{
-                padding: '16px 36px',
-                background: 'rgba(255,255,255,0.08)', color: 'var(--slate-400)',
-                border: '1.5px solid rgba(255,255,255,0.15)', borderRadius: 14,
-                fontSize: 20, fontWeight: 600, cursor: 'pointer',
-              }}
-              aria-label="Cancel and go back"
-            >
-              Cancel
+              {consentLoading ? t('aadhaarConsent.processing', 'Processing...') : t('aadhaarConsent.continue', 'Continue')}
             </button>
           </div>
-
-          <p style={{ color: 'var(--slate-600)', fontSize: 14, marginTop: 20 }}>
-            By clicking "I Agree" you consent to reading your Aadhaar Offline e-KYC QR for
-            identity verification at this SUVIDHA kiosk.
-          </p>
         </div>
       </div>
     );
@@ -337,20 +322,20 @@ If any field is not visible, use empty string.`;
       {/* Header */}
       <div style={{ color: 'white', textAlign: 'center', marginBottom: 20 }}>
         <div style={{ fontSize: 32, fontWeight: 800, marginBottom: 8 }}>
-          ♿ Aadhaar Card Scanner
+          Aadhaar Card Scanner
         </div>
         <div style={{ fontSize: 20, color: 'var(--slate-400)' }}>
           {status === 'starting' && 'Starting camera…'}
           {status === 'scanning' && 'Hold your Aadhaar card steady in front of camera'}
-          {status === 'ocr' && '🔍 Analysing card with NVIDIA Vision AI…'}
-          {status === 'found' && `✅ Detected: ${detected?.name}`}
+          {status === 'ocr' && ' Analysing card with NVIDIA Vision AI…'}
+          {status === 'found' && ` Detected: ${detected?.name}`}
           {status === 'error' && errorMsg}
         </div>
       </div>
 
       {/* Camera preview */}
       <div style={{
-        position: 'relative', width: '100%', maxWidth: 640,
+        position: 'relative', width: '100%', maxWidth: 760,
         borderRadius: 20, overflow: 'hidden',
         border: status === 'found' ? '4px solid var(--accent-green)' : '3px solid var(--accent-indigo)',
         background: 'var(--slate-900)',
@@ -394,7 +379,7 @@ If any field is not visible, use empty string.`;
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexDirection: 'column', gap: 12,
           }}>
-            <div style={{ fontSize: 80 }}>✅</div>
+            <div style={{ fontSize: 80 }}></div>
             <div style={{ color: 'white', fontSize: 28, fontWeight: 700 }}>{detected?.name}</div>
             <div style={{ color: 'var(--accent-green-300)', fontSize: 20 }}>Logging in…</div>
           </div>

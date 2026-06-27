@@ -28,15 +28,19 @@ export function AadhaarCells({ value = '' }) {
     <div style={{
       display: 'flex',
       justifyContent: 'center',
-      gap: 10,
-      marginBottom: 32,
+      gap: 'calc(14px * var(--ui-scale))',
+      marginBottom: 'calc(32px * var(--ui-scale))',
       flexWrap: 'wrap',
     }}>
       {cells.map((digit, i) => (
         <div
           key={i}
           className="otp-cell"
-          style={{ width: 64, height: 88, fontSize: 36 }}
+          style={{
+            width: 'calc(96px * var(--ui-scale))',
+            height: 'calc(124px * var(--ui-scale))',
+            fontSize: 'calc(44px * var(--ui-scale))',
+          }}
         >
           {digit}
         </div>

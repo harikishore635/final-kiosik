@@ -128,8 +128,8 @@ const Modal = ({
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
         aria-describedby={message ? 'modal-desc' : undefined}
-        className="bg-white rounded-kiosk-lg shadow-2xl w-full animate-slide-up overflow-hidden"
-        style={{ maxWidth: 'calc(820px * var(--ui-scale))', maxHeight: '88vh', overflowY: 'auto' }}
+        className="bg-white rounded-kiosk-lg shadow-2xl w-full animate-slide-up overflow-hidden flex flex-col"
+        style={{ maxWidth: 'calc(1100px * var(--ui-scale))', height: 'calc(620px * var(--ui-scale))', maxHeight: '88vh' }}
       >
         {/* Header */}
         <div className="relative p-6 pb-0">
@@ -145,7 +145,7 @@ const Modal = ({
         </div>
 
         {/* Content */}
-        <div className="p-8 text-center">
+        <div className="p-8 text-center flex-1 overflow-y-auto flex flex-col items-center justify-center">
           {type && icons[type] && (
             <div className="flex justify-center mb-6" aria-hidden="true">
               {icons[type]}
@@ -169,7 +169,7 @@ const Modal = ({
 
         {/* Actions */}
         {(confirmText || cancelText) && (
-          <div className="p-6 bg-gray-50 flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="p-6 bg-gray-50 flex flex-col sm:flex-row gap-4 justify-center flex-shrink-0">
             {cancelText && (
               <Button variant="secondary" onClick={onCancel || onClose} size="large" className="min-w-[150px]">
                 {cancelText}

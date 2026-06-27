@@ -6,7 +6,7 @@
 // ──────────────────────────────────────────────────────────────────
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { changeLanguageSafe } from '../i18n';
 import { useSession } from '../context/SessionContext';
@@ -53,6 +53,8 @@ const LANGS = INDIAN_LANGUAGES.map((l) => ({
 
 export default function LanguageSelection() {
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const returnTo = state?.returnTo;
   const { t, i18n } = useTranslation();
   const { setLanguage } = useSession();
   const activeLanguage = (i18n.resolvedLanguage || i18n.language || 'en').toLowerCase().split('-')[0];
@@ -71,7 +73,7 @@ export default function LanguageSelection() {
     try { await changeLanguageSafe(lang.ui); } catch { /* UI strings best-effort */ }
     sessionStorage.setItem('userLanguage', lang.ui);
     document.documentElement.lang = lang.ui;
-    navigate('/voice-select');
+    navigate(returnTo || '/voice-select', { replace: Boolean(returnTo) });
   };
 
   return (

@@ -80,6 +80,7 @@ export const ic = {
   link:     <g><path d="M10 14 L14 10" /><path d="M11 6 L15 2 A4 4 0 0 1 22 9 L18 13" /><path d="M13 18 L9 22 A4 4 0 0 1 2 15 L6 11" /></g>,
   dot:      <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />,
   chat:     <g><path d="M4 5 H20 V16 H9 L5 20 V16 H4 Z" /><path d="M8 9 H16 M8 12.5 H13" /></g>,
+  logout:   <g><path d="M9 4 H6 A2 2 0 0 0 4 6 V18 A2 2 0 0 0 6 20 H9" /><path d="M16 16 L20 12 L16 8" /><path d="M20 12 H10" /></g>,
 };
 
 // Pick the right weather icon glyph from an iconKey string ('sun'|'cloud'|'cloudsun')

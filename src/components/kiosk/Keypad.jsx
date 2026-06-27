@@ -10,7 +10,7 @@ export default function Keypad({
   onKey,
   onBackspace,
   onSubmit,
-  maxWidth = 560,
+  maxWidth = 640,
   disabled = false,
 }) {
   const { t } = useTranslation();
@@ -22,7 +22,7 @@ export default function Keypad({
   };
 
   return (
-    <div className="keypad" style={{ maxWidth, margin: '0 auto', width: '100%' }}>
+    <div className="keypad" style={{ maxWidth: `calc(${maxWidth}px * var(--ui-scale))`, margin: '0 auto', width: '100%' }}>
       {KEYS.map((k, i) => (
         <button
           key={i}
