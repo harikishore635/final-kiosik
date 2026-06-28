@@ -33,9 +33,12 @@ const MobileUpload = () => {
   const [uploadError, setUploadError] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
-  // Auto-verify when PIN is embedded in QR URL
+  // Auto-fill and verify when PIN is encoded in QR URL (?p=base64)
   useEffect(() => {
-    if (urlPin) setPinVerified(true);
+    if (urlPin) {
+      setPin(urlPin);
+      setPinVerified(true);
+    }
   }, [urlPin]);
 
   const isDisabled = useMemo(() => !pinVerified || uploading, [pinVerified, uploading]);

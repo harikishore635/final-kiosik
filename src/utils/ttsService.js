@@ -210,6 +210,34 @@ class TTSService {
         try { await this.playAudioFromObjectUrl(this.audioCache.get(cacheKey), item.options?.volume); return; } catch { /* fall through */ }
       }
 
+      // 2. Sarvam TTS — only for chatbot AI responses (not navigation).
+      // Navigation uses static MP3s (Tier 0) or Web Speech. Chatbot responses
+      // are dynamic text that benefits from the higher-quality Sarvam voice.
+      if (item.options?.chatbot === true) {
+        try {
+          const resp = await fetch('/api/sarvam/text-to-speech', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              inputs: [item.text],
+              target_language_code: langInfo.code,
+              speaker: item.options?.speaker || VOICE_PROFILE.speakers[langInfo.code] || VOICE_PROFILE.defaultSpeaker,
+              model: VOICE_PROFILE.model,
+            }),
+            signal: AbortSignal.timeout(10000),
+          });
+          if (resp.ok) {
+            const blob = await resp.blob();
+            if (blob.size > 0) {
+              const url = URL.createObjectURL(blob);
+              await this.playAudioFromObjectUrl(url, item.options?.volume);
+              URL.revokeObjectURL(url);
+              return;
+            }
+          }
+        } catch { /* Sarvam unavailable — fall through to Web Speech */ }
+      }
+
       // 3. Offline MMS-TTS model (currently Hindi only — see offlineTTS.js).
       // Covers the gap Browser SpeechSynthesis leaves: that tier depends on
       // the device having a Hindi voice installed, which isn't guaranteed.

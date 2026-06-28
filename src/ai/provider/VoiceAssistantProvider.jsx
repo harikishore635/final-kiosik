@@ -143,6 +143,7 @@ export function VoiceAssistantProvider({ children }) {
     try {
       await speak(text, {
         language: effectiveLang,
+        chatbot: true,
         interrupt: true,
         onStart: () => {
           stopListening();
