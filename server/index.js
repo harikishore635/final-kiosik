@@ -110,7 +110,10 @@ const globalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many requests. Please try again later.' },
-  skip: (req) => req.path.startsWith('/api/upload') || req.path.startsWith('/api/upload-public'),
+  skip: (req) =>
+    req.path === '/api/health' ||
+    req.path.startsWith('/api/upload') ||
+    req.path.startsWith('/api/upload-public'),
 });
 
 // Auth endpoints: strict 10/15min to block OTP brute-force
