@@ -31,14 +31,14 @@ services:
         sync: false
       # Flask Aadhaar decoder URL — set after Flask service is deployed
       - key: AADHAAR_DECODER_URL
-        value: https://suvidha-aadhaar-decoder.onrender.com
+        value: https://suvidha-aadhaar-decoder-flask.onrender.com
       # Shared secret between Express and Flask — must match Flask service
       - key: DECODER_API_SECRET
         generateValue: true
 
   # ── Flask Aadhaar Decoder (Python) ───────────────────────────────────────
   - type: web
-    name: suvidha-aadhaar-decoder
+    name: suvidha-aadhaar-decoder-flask
     runtime: python
     plan: free
     rootDir: server/flask-aadhaar
