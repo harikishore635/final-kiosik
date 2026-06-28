@@ -9,6 +9,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { lookupAadhaar, detectAccessibilityProfile, calculateAge } from '../utils/aadhaarDatabase';
+import aadhaarDB from '../utils/aadhaarDatabase';
 import { authAPI } from '../utils/apiService';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '../hooks/useToast';
@@ -36,6 +37,94 @@ const ALT_AUTH_DB = {
   'DEMO-BN-03': { uid: '790480284900', name: 'Meena Gogoi',  mobile: '7904802849', type: 'municipal',    dept: 'Municipal',   language: 'bn' },
   'DEMO-EN-04': { uid: '730503711700', name: 'Arun Barua',   mobile: '7305037117', type: 'electricity', dept: 'Electricity', language: 'en' },
 };
+
+// ── Aadhaar QR camera scanner — jsqr reads camera frames ─────────────────────
+function AadhaarQrScanner({ aadhaarRecord, onSuccess, onSkip, isLoading }) {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const rafRef = useRef(null);
+  const [camError, setCamError] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const [detected, setDetected] = useState('');
+
+  useEffect(() => {
+    let stream;
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: 640, height: 640 },
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+          setScanning(true);
+        }
+      } catch {
+        setCamError('Camera not available. Use "Skip QR" button below.');
+      }
+    })();
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      stream?.getTracks().forEach(t => t.stop());
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!scanning) return;
+    let active = true;
+    const scan = async () => {
+      if (!active) return;
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      if (!video || !canvas || video.readyState < 2) { rafRef.current = requestAnimationFrame(scan); return; }
+      const ctx = canvas.getContext('2d');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const jsQR = (await import('jsqr')).default;
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code?.data) {
+        setDetected(code.data.slice(0, 60));
+        // Aadhaar offline QR contains XML with uid attribute — try to extract
+        const uidMatch = code.data.match(/uid="(\d{12})"/i);
+        if (uidMatch) {
+          active = false;
+          onSuccess({ data: { uid: uidMatch[1], name: aadhaarRecord?.name }, token: null, method: 'qr_scan' });
+          return;
+        }
+        // Non-Aadhaar QR — show what was found, let user skip
+      }
+      rafRef.current = requestAnimationFrame(scan);
+    };
+    rafRef.current = requestAnimationFrame(scan);
+    return () => { active = false; cancelAnimationFrame(rafRef.current); };
+  }, [scanning, aadhaarRecord, onSuccess]);
+
+  return (
+    <div className="card" style={{ padding: 28, textAlign: 'center' }}>
+      <h3 className="h3" style={{ marginBottom: 12 }}>
+        {detected ? 'QR detected!' : 'Scan Aadhaar QR Code'}
+      </h3>
+      <p className="body" style={{ marginBottom: 16, color: 'var(--ink-500)' }}>
+        {camError || (scanning ? 'Point camera at the QR code on your Aadhaar card' : 'Starting camera…')}
+      </p>
+      {!camError && (
+        <div style={{ position: 'relative', width: 280, height: 280, margin: '0 auto 16px', borderRadius: 16, overflow: 'hidden', border: '3px solid var(--indigo-400)', background: '#000' }}>
+          <video ref={videoRef} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted playsInline />
+          <canvas ref={canvasRef} style={{ display: 'none' }} />
+          {/* scanning corners overlay */}
+          <div style={{ position: 'absolute', inset: 0, border: '3px solid var(--ok)', borderRadius: 14, opacity: detected ? 1 : 0.3 }} />
+        </div>
+      )}
+      {detected && <p style={{ color: 'var(--ok)', fontWeight: 700, marginBottom: 12 }}>QR read — verifying…</p>}
+      <button type="button" className="btn btn-pri btn-xl" style={{ width: '100%', marginTop: 8 }}
+        disabled={isLoading} onClick={onSkip}>
+        {isLoading ? 'Verifying…' : 'Demo: Skip QR →'}
+      </button>
+    </div>
+  );
+}
 
 export default function Login() {
   const { t, i18n } = useTranslation();
@@ -142,7 +231,17 @@ export default function Login() {
   const handleAadhaarKey = (digit) => {
     if (aadhaarNumber.length >= 12) return;
     setAadhaarError('');
-    setAadhaarNumber((p) => (p + digit).slice(0, 12));
+    setAadhaarNumber((prev) => {
+      const next = (prev + digit).slice(0, 12);
+      // Speak digit count after groups of 4 for blind users
+      if (next.length % 4 === 0) {
+        tts(`${next.length} digits entered`, { priority: 'normal', cache: false });
+      }
+      if (next.length === 12) {
+        tts('12 digits entered. Press submit to verify.', { priority: 'warning', cache: false });
+      }
+      return next;
+    });
   };
   const handleAadhaarBackspace = () => {
     setAadhaarError('');
@@ -221,12 +320,29 @@ export default function Login() {
     }
 
     try {
-      const validation = await authAPI.validateAadhaarMobile(rec.uid, cleanedMobile);
-      if (!validation?.success) {
-        const msg = validation?.error || 'Mobile number does not match Aadhaar records.';
-        setOtpError(msg);
-        toast.error(msg);
-        return;
+      // For demo citizens in local DB, validate mobile locally so the app
+      // works even when Render backend is cold/empty (SQLite is ephemeral).
+      const localRecord = aadhaarDB[rec.uid];
+      let maskedMob;
+      if (localRecord) {
+        const localMobile = normalizeIndianMobile(localRecord.mobile || '');
+        if (localMobile !== cleanedMobile) {
+          const msg = 'Mobile number does not match Aadhaar records.';
+          setOtpError(msg);
+          toast.error(msg);
+          return;
+        }
+        maskedMob = maskMobile(cleanedMobile);
+      } else {
+        // Not a local demo record — use backend validation
+        const validation = await authAPI.validateAadhaarMobile(rec.uid, cleanedMobile);
+        if (!validation?.success) {
+          const msg = validation?.error || 'Mobile number does not match Aadhaar records.';
+          setOtpError(msg);
+          toast.error(msg);
+          return;
+        }
+        maskedMob = validation.maskedMobile || maskMobile(cleanedMobile);
       }
 
       const otpResult = await sendOtp({
@@ -245,7 +361,7 @@ export default function Login() {
         return;
       }
 
-      setMaskedMobileValue(validation.maskedMobile || maskMobile(cleanedMobile));
+      setMaskedMobileValue(maskedMob);
       setOtpSent(true);
       setOtp('');
       setOtpError('');
@@ -652,7 +768,7 @@ export default function Login() {
               fontFamily: 'var(--font-mono)',
               marginTop: 4,
             }}>
-              {maskedMobileValue || maskMobile(mobile || '+91 98****0000')}
+              {maskedMobileValue || (mobile ? maskMobile(mobile) : '••••••••••')}
             </div>
           </div>
 
@@ -701,33 +817,12 @@ export default function Login() {
       )}
 
       {authMethod === 'qr' && (
-        <div className="card" style={{ padding: 36, textAlign: 'center' }}>
-          <div style={{
-            width: 280, height: 280, borderRadius: 18,
-            background: 'var(--surface-1)',
-            border: '2px dashed var(--indigo-300)',
-            margin: '0 auto 20px',
-            display: 'grid', placeItems: 'center',
-            color: 'var(--indigo-700)',
-          }}>
-            <I d={ic.qr} size={120} />
-          </div>
-          <h3 className="h3" style={{ marginBottom: 8 }}>Scan QR via DigiLocker</h3>
-          <p className="body" style={{ marginBottom: 24 }}>
-            Open DigiLocker app · scan with your phone camera
-          </p>
-          <button
-            type="button"
-            className="btn btn-pri btn-xl"
-            style={{ width: '100%' }}
-            disabled={methodLoading === 'qr'}
-            onClick={handleQrDemoLogin}
-          >
-            {methodLoading === 'qr' && <ButtonSpinner variant="primary" />}
-            {methodLoading === 'qr' ? 'Verifying…' : 'Demo: Skip QR'}
-            <I d={ic.arrow} size={26} />
-          </button>
-        </div>
+        <AadhaarQrScanner
+          aadhaarRecord={aadhaarRecord}
+          onSuccess={finalizeLoginForMethod}
+          onSkip={handleQrDemoLogin}
+          isLoading={methodLoading === 'qr'}
+        />
       )}
 
       {authMethod === 'biometric' && (

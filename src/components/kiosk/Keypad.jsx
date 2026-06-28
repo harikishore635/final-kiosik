@@ -6,18 +6,30 @@ import { useTranslation } from 'react-i18next';
 
 const KEYS = [1, 2, 3, 4, 5, 6, 7, 8, 9, '⌫', 0, '✓'];
 
+// Speak digit via browser speechSynthesis — works offline, no import needed
+function speakDigit(text) {
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = 1.1;
+  u.volume = 0.9;
+  window.speechSynthesis.speak(u);
+}
+
 export default function Keypad({
   onKey,
   onBackspace,
   onSubmit,
   maxWidth = 560,
   disabled = false,
+  speakDigits = true,   // read each digit aloud for blind users
 }) {
   const { t } = useTranslation();
   const press = (k) => {
     if (disabled) return;
-    if (k === '⌫') return onBackspace?.();
-    if (k === '✓') return onSubmit?.();
+    if (k === '⌫') { speakDigits && speakDigit('delete'); return onBackspace?.(); }
+    if (k === '✓') { speakDigits && speakDigit('submit'); return onSubmit?.(); }
+    speakDigits && speakDigit(String(k));
     onKey?.(String(k));
   };
 

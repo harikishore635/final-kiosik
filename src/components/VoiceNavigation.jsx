@@ -19,6 +19,31 @@ import { stopTTS } from '../utils/ttsService';
 import { useAuth } from '../hooks/useAuth';
 
 const getBaseLang = (language) => (language || 'en').toLowerCase().split('-')[0];
+
+// Convert Float32Array (16kHz, mono) → WAV Blob for Whisper input
+function float32ToWavBlob(samples, sampleRate = 16000) {
+  const buf = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buf);
+  const writeStr = (off, str) => { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);    // PCM
+  view.setUint16(22, 1, true);    // mono
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, 'data');
+  view.setUint32(40, samples.length * 2, true);
+  const pcm = new Int16Array(buf, 44);
+  for (let i = 0; i < samples.length; i++) {
+    pcm[i] = Math.max(-32768, Math.min(32767, Math.round(samples[i] * 32767)));
+  }
+  return new Blob([buf], { type: 'audio/wav' });
+}
 const normalizeVoiceText = (text) => (text || '')
   .toLowerCase()
   .replace(/[.,!?;:'"`~@#$%^&*()_+=[\]{}\\/|<>-]/g, ' ')
@@ -51,6 +76,7 @@ const VoiceNavigation = () => {
   const audioChunksRef = useRef([]);
   const recognitionRef = useRef(null);
   const audioContextRef = useRef(null);
+  const vadRef = useRef(null); // Silero VAD instance
 
   // ── Voice command mappings ─────────────────────────────────────────────
   const commands = {
@@ -453,7 +479,55 @@ const VoiceNavigation = () => {
         return;
       }
 
-      // Fallback: MediaRecorder → Sarvam STT
+      // Silero VAD → Whisper: auto-detects speech boundaries, removes noise
+      try {
+        const { MicVAD } = await import('@ricky0123/vad-web');
+        const { whisperTranscribe } = await import('../ai/voice/localSTT.js');
+        const selectedLang = getBaseLang(i18n.language);
+
+        if (vadRef.current) { try { vadRef.current.destroy(); } catch { /* ok */ } }
+
+        const vad = await MicVAD.new({
+          onSpeechStart: () => {
+            setIsListening(true);
+            showFeedback('🎙 Listening…');
+          },
+          onSpeechEnd: async (audioFloat32) => {
+            setIsListening(false);
+            showFeedback('Processing…');
+            vad.pause();
+            try {
+              // Convert Float32Array to Blob for whisperTranscribe
+              const wavBlob = float32ToWavBlob(audioFloat32, 16000);
+              const result = await whisperTranscribe(wavBlob, selectedLang);
+              if (result?.transcript) {
+                setTranscript(result.transcript);
+                processCommand(result.transcript);
+              } else {
+                showFeedback("Didn't catch that — try again");
+                announceNotUnderstood(selectedLang);
+              }
+            } catch {
+              // Fallback to Sarvam STT if Whisper fails
+              try {
+                const wavBlob = float32ToWavBlob(audioFloat32, 16000);
+                const { speechToText } = await import('../utils/sarvamAPI');
+                const r = await speechToText(wavBlob, selectedLang);
+                const text = r?.transcript || r?.text || '';
+                if (text) { setTranscript(text); processCommand(text); }
+                else showFeedback("Didn't catch that — try again");
+              } catch { showFeedback('Could not process speech'); }
+            }
+          },
+        });
+        vadRef.current = vad;
+        vad.start();
+        stopTTS();
+        announceListening(selectedLang);
+        return;
+      } catch { /* VAD unavailable — fall through to MediaRecorder */ }
+
+      // Last-resort: MediaRecorder → Sarvam STT
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
       mediaRecorderRef.current = mediaRecorder;
@@ -552,6 +626,9 @@ const VoiceNavigation = () => {
     return () => {
       if (recognitionRef.current) {
         try { recognitionRef.current.abort(); } catch { /* ok */ }
+      }
+      if (vadRef.current) {
+        try { vadRef.current.destroy(); } catch { /* ok */ }
       }
       stopBargeInListener();
     };

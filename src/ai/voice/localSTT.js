@@ -27,7 +27,17 @@ env.useBrowserCache = true;
 // it requires a different approach (e.g. a Vite plugin or CDN-hosted wasm),
 // not a raw /public override.
 
-const MODEL_ID = 'Xenova/whisper-small';
+// Model selection per language:
+//   medium (244MB int8 ≈ 61MB) → Assamese, Bengali, Hindi, English, Tamil — need higher accuracy
+//   small  (67MB int8) → other languages — adequate for keyword navigation
+const HIGH_PRIORITY_LANGS = new Set(['as', 'bn', 'hi', 'en', 'ta', 'te']);
+
+function getModelId(lang) {
+  const base = (lang || 'hi').toLowerCase().split('-')[0];
+  return HIGH_PRIORITY_LANGS.has(base) ? 'Xenova/whisper-medium' : 'Xenova/whisper-small';
+}
+
+const MODEL_ID = 'Xenova/whisper-small'; // kept for loadWhisper() backward compat
 
 // Whisper uses full English language names, not ISO codes
 const WHISPER_LANG_MAP = {
@@ -57,51 +67,54 @@ const WHISPER_LANG_MAP = {
   sat: 'bengali', // Santali uses Ol Chiki but Bengali fallback works
 };
 
-let _pipe = null;
-let _loadPromise = null;
+// Cache per model ID so medium + small can coexist in memory
+const _pipes = {};
+const _loadPromises = {};
 let _loadProgress = 0;
 
 /**
  * Load Whisper pipeline. Returns immediately if already loaded.
  * Dispatches progress events for UI feedback.
  */
-export async function loadWhisper(onProgress) {
-  if (_pipe) return _pipe;
+async function loadWhisperModel(modelId, onProgress) {
+  if (_pipes[modelId]) return _pipes[modelId];
+  if (_loadPromises[modelId]) return _loadPromises[modelId];
 
-  if (_loadPromise) return _loadPromise;
-
-  _loadPromise = (async () => {
+  _loadPromises[modelId] = (async () => {
     try {
-      window.dispatchEvent(new CustomEvent('suvidha:whisper-loading', { detail: { progress: 0 } }));
-
-      _pipe = await pipeline(
+      window.dispatchEvent(new CustomEvent('suvidha:whisper-loading', { detail: { progress: 0, model: modelId } }));
+      _pipes[modelId] = await pipeline(
         'automatic-speech-recognition',
-        MODEL_ID,
+        modelId,
         {
-          quantized: true,          // int8 quantization: 67MB vs 244MB
+          quantized: true,
           progress_callback: (info) => {
             if (info.status === 'downloading') {
               const pct = info.total > 0 ? Math.round((info.loaded / info.total) * 100) : 0;
               _loadProgress = pct;
               onProgress?.(pct, info.file);
-              window.dispatchEvent(new CustomEvent('suvidha:whisper-loading', { detail: { progress: pct, file: info.file } }));
+              window.dispatchEvent(new CustomEvent('suvidha:whisper-loading', { detail: { progress: pct, file: info.file, model: modelId } }));
             } else if (info.status === 'ready') {
               _loadProgress = 100;
-              window.dispatchEvent(new CustomEvent('suvidha:whisper-ready'));
+              window.dispatchEvent(new CustomEvent('suvidha:whisper-ready', { detail: { model: modelId } }));
             }
           },
         }
       );
-
-      window.dispatchEvent(new CustomEvent('suvidha:whisper-ready'));
-      return _pipe;
+      window.dispatchEvent(new CustomEvent('suvidha:whisper-ready', { detail: { model: modelId } }));
+      return _pipes[modelId];
     } catch (err) {
-      _loadPromise = null;
+      delete _loadPromises[modelId];
       throw err;
     }
   })();
 
-  return _loadPromise;
+  return _loadPromises[modelId];
+}
+
+// Backward-compat: preload default small model
+export async function loadWhisper(onProgress) {
+  return loadWhisperModel(MODEL_ID, onProgress);
 }
 
 export function isWhisperLoaded() {
@@ -160,8 +173,9 @@ async function blobToFloat32(blob) {
  * @returns {Promise<{ transcript: string, provider: string }>}
  */
 export async function whisperTranscribe(audioBlob, language = 'hi') {
-  const pipe = await loadWhisper();
   const baseLang = (language || 'hi').toLowerCase().split('-')[0];
+  const modelId = getModelId(baseLang);
+  const pipe = await loadWhisperModel(modelId);
   const whisperLang = WHISPER_LANG_MAP[baseLang] || 'hindi';
 
   const audioData = await blobToFloat32(audioBlob);
