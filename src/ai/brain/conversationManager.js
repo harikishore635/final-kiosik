@@ -12,6 +12,7 @@ import {
 import { detectLanguage, setLanguagePreference } from './multilingualProcessor.js';
 import { semanticMatch, prewarmSemanticMatcher } from './semanticIntentMatcher.js';
 import { INTENT_TO_PATH } from './intentRouter.js';
+import { needsPivot, processWithEnglishPivot } from './translatePivot.js';
 
 // Pre-warm MiniLLM in background — first real use will be instant
 prewarmSemanticMatcher();
@@ -61,12 +62,18 @@ export async function processConversationTurn(userMessage, options = {}) {
 
   let aiResponse;
   try {
-    // Always non-streaming: voice speaks after full reply; streaming prevents
-    // response_format:json_object which causes JSON parse failures
-    aiResponse = await callNvidiaAI(messages, {
-      stream: false,
-      jsonMode: true,
-    });
+    if (needsPivot(language)) {
+      // Open LLMs reason better in English than Assamese — pivot through
+      // English instead of asking the model to think in Assamese directly.
+      aiResponse = await processWithEnglishPivot(userMessage, messages, langInfo.sarvamCode || 'as-IN');
+    } else {
+      // Always non-streaming: voice speaks after full reply; streaming prevents
+      // response_format:json_object which causes JSON parse failures
+      aiResponse = await callNvidiaAI(messages, {
+        stream: false,
+        jsonMode: true,
+      });
+    }
     console.log('[ConversationManager] NVIDIA ok, intent:', aiResponse?.intent);
   } catch (err) {
     console.error('[ConversationManager] AI call failed:', err);
