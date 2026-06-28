@@ -1,10 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { QrCode, CheckCircle, Smartphone, Copy, X, RefreshCw } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
-import { uploadAPI, uploadPublicAPI } from '../utils/apiService';
+import { supabase } from '../utils/supabaseClient';
 import FilePreviewModal from './FilePreviewModal';
 import { RadiantLoader, UploadRing } from './loading';
 import { sleep } from '../utils/mockDelay';
+
+const formatFileSize = (bytes) => {
+  if (!bytes) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 /**
  * QR Code based document upload — replaces traditional file upload on kiosk.
@@ -34,43 +41,16 @@ const QRUpload = ({
   const kioskPin = sessionInfo?.pin;
 
   const handleShowQR = () => {
-    // Render the QR instantly from client-generated values — sessionId, pin,
-    // and uploadUrl are all derivable here, same logic the server uses
-    // (server/routes/upload.js:66-77). The server call only persists the
-    // pinHash for later validation when the phone uploads; it doesn't
-    // produce any value the QR itself needs. Previously this awaited the
-    // network call before rendering anything, so a slow/offline kiosk
-    // showed nothing instead of a scannable code.
     setShowQR(true);
     setUploadStatus('waiting');
     setErrorMessage('');
 
-    const sessionId = uploadId || `UP-${Date.now().toString(36).toUpperCase()}`;
+    const sid = uploadId || `UP-${Date.now().toString(36).toUpperCase()}`;
     const pin = String(Math.floor(100000 + Math.random() * 900000));
-    const uploadUrl = `${window.location.origin}/mobile-upload/${sessionId}`;
-    setSessionInfo({ sessionId, pin, uploadUrl });
-
-    persistSession(sessionId, pin);
-  };
-
-  // Persists the session server-side so the phone's pin entry can be
-  // validated later. Retries on reconnect if the kiosk is offline right now —
-  // the QR is already showing and scannable, this just makes the upload
-  // actually work once a network exists on at least one side of the
-  // kiosk/phone pair.
-  const persistSession = async (sessionId, pin) => {
-    try {
-      await uploadAPI.createSession(sessionId, pin);
-      setErrorMessage('');
-    } catch {
-      setErrorMessage('Kiosk is offline — this code will activate once it reconnects.');
-      const retry = () => {
-        uploadAPI.createSession(sessionId, pin)
-          .then(() => { setErrorMessage(''); window.removeEventListener('online', retry); })
-          .catch(() => {});
-      };
-      window.addEventListener('online', retry);
-    }
+    // PIN is encoded in the QR URL so the phone skips manual entry — same
+    // person who can scan the QR already sees the PIN on screen.
+    const uploadUrl = `${window.location.origin}/mobile-upload/${sid}?p=${btoa(pin)}`;
+    setSessionInfo({ sessionId: sid, pin, uploadUrl });
   };
 
   const handleRegenerate = () => {
@@ -132,18 +112,30 @@ const QRUpload = ({
 
   useEffect(() => {
     if (!showQR || uploadStatus !== 'waiting' || !sessionId) return undefined;
+    if (!supabase) {
+      setErrorMessage('Supabase not configured — uploads unavailable.');
+      return undefined;
+    }
 
     let isActive = true;
     const poll = async () => {
       try {
-        const status = await uploadPublicAPI.getStatus(sessionId, kioskPin);
+        const { data: storageFiles, error } = await supabase.storage
+          .from('uploads')
+          .list(sessionId);
+
         if (!isActive) return;
-        if (status?.status === 'complete') {
-          const files = status.files || [];
+        if (error) { setErrorMessage('Waiting for upload...'); return; }
+
+        const real = (storageFiles || []).filter(f => f.name !== '.emptyFolderPlaceholder');
+        if (real.length > 0) {
+          const files = real.map(f => ({
+            name: f.name,
+            size: formatFileSize(f.metadata?.size),
+            url: `${sessionId}/${f.name}`,
+            publicUrl: supabase.storage.from('uploads').getPublicUrl(`${sessionId}/${f.name}`).data.publicUrl,
+          }));
           setUploadStatus('finalizing');
-          // Brief mock-fill flourish — not real byte progress (the kiosk only
-          // polls a remote session, it never receives bytes directly), but
-          // gives the upload moment a satisfying completion beat.
           const steps = 12;
           for (let i = 1; i <= steps; i++) {
             // eslint-disable-next-line no-await-in-loop
@@ -153,25 +145,21 @@ const QRUpload = ({
           }
           setUploadedFiles(files);
           setUploadStatus('complete');
-          if (onUploadComplete) {
-            onUploadComplete(files);
-          }
+          if (onUploadComplete) onUploadComplete(files);
         }
       } catch {
-        if (isActive) {
-          setErrorMessage('Waiting for upload...');
-        }
+        if (isActive) setErrorMessage('Waiting for upload...');
       }
     };
 
-    const interval = setInterval(poll, 2000);
+    const interval = setInterval(poll, 3000);
     poll();
 
     return () => {
       isActive = false;
       clearInterval(interval);
     };
-  }, [showQR, uploadStatus, sessionId, kioskPin, onUploadComplete]);
+  }, [showQR, uploadStatus, sessionId, onUploadComplete]);
 
   const formattedPin = useMemo(() => {
     if (!kioskPin) return '';

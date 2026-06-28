@@ -1,4 +1,4 @@
-import { getAudio, setAudio } from './offlineAudioCache';
+
 import { VOICE_PROFILE } from '../config/voiceProfile';
 import { getStaticAudioUrl } from './staticAudioMap';
 
@@ -76,13 +76,6 @@ class TTSService {
     this.cacheOrder = [];
     this.currentAbort = null;
 
-    this._streamingSupported = this._checkStreamingSupport();
-  }
-
-  _checkStreamingSupport() {
-    if (typeof window === 'undefined') return false;
-    if (!('MediaSource' in window)) return false;
-    return MediaSource.isTypeSupported('audio/mpeg');
   }
 
   getLanguageInfo(language) {
@@ -217,17 +210,6 @@ class TTSService {
         try { await this.playAudioFromObjectUrl(this.audioCache.get(cacheKey), item.options?.volume); return; } catch { /* fall through */ }
       }
 
-      // 2. IndexedDB offline cache
-      try {
-        const cachedBlob = await getAudio(cacheKey);
-        if (cachedBlob) {
-          const url = URL.createObjectURL(cachedBlob);
-          this._addToMemCache(cacheKey, url);
-          await this.playAudioFromObjectUrl(url, item.options?.volume);
-          return;
-        }
-      } catch { /* IndexedDB unavailable */ }
-
       // 3. Offline MMS-TTS model (currently Hindi only — see offlineTTS.js).
       // Covers the gap Browser SpeechSynthesis leaves: that tier depends on
       // the device having a Hindi voice installed, which isn't guaranteed.
@@ -249,155 +231,6 @@ class TTSService {
       window.dispatchEvent(new CustomEvent('suvidha:tts-ended', { detail: { text: item.text } }));
       item.options?.onEnd?.();
     }
-  }
-
-  // ── Streaming TTS ─────────────────────────────────────────────────────────
-  async playStreaming(text, langInfo, options = {}) {
-    const endpoint = langInfo.needsBridge
-      ? '/api/sarvam/tts-stream-bridge'
-      : '/api/sarvam/text-to-speech-stream';
-
-    const body = langInfo.needsBridge
-      ? { text, sourceLangCode: langInfo.originalLang, pace: options.pace || VOICE_PROFILE.pace }
-      : {
-          text,
-          target_language_code: langInfo.code,
-          speaker: options.speaker || VOICE_PROFILE.speakers[langInfo.code] || VOICE_PROFILE.defaultSpeaker,
-          pace: options.pace || VOICE_PROFILE.pace,
-          enable_preprocessing: true,
-          model: VOICE_PROFILE.model,
-        };
-
-    this.currentAbort = new AbortController();
-
-    const resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: this.currentAbort.signal,
-    });
-
-    if (!resp.ok) throw new Error(`Streaming TTS HTTP ${resp.status}`);
-
-    if (this._streamingSupported) {
-      return this.playStreamingWithMediaSource(resp.body, options?.volume);
-    }
-
-    const blob = await resp.blob();
-    if (!blob.size) throw new Error('Empty streaming response');
-
-    const cacheKey = this.getCacheKey(text, langInfo.code, options);
-    setAudio(cacheKey, blob).catch(() => {});
-
-    const url = URL.createObjectURL(blob);
-    this._addToMemCache(cacheKey, url);
-    return this.playAudioFromObjectUrl(url, options?.volume);
-  }
-
-  playStreamingWithMediaSource(readableStream, volume = 1) {
-    return new Promise((resolve, reject) => {
-      const mediaSource = new MediaSource();
-      const audio = new Audio();
-      audio.volume = Math.max(0, Math.min(1, Number(volume)));
-      audio.src = URL.createObjectURL(mediaSource);
-
-      this.currentAudio = audio;
-
-      let sourceBuffer;
-      let finished = false;
-      const pendingChunks = [];
-      let appending = false;
-
-      const appendNext = () => {
-        if (appending || pendingChunks.length === 0) return;
-        if (sourceBuffer.updating) return;
-        appending = true;
-        const chunk = pendingChunks.shift();
-        try {
-          sourceBuffer.appendBuffer(chunk);
-        } catch {
-          appending = false;
-        }
-      };
-
-      mediaSource.addEventListener('sourceopen', async () => {
-        try {
-          sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg');
-          sourceBuffer.addEventListener('updateend', () => {
-            appending = false;
-            if (pendingChunks.length > 0) {
-              appendNext();
-            } else if (finished && !sourceBuffer.updating) {
-              try { mediaSource.endOfStream(); } catch { /* already ended */ }
-            }
-          });
-
-          audio.play().catch(() => {});
-
-          const reader = readableStream.getReader();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) {
-              finished = true;
-              if (!sourceBuffer.updating && pendingChunks.length === 0) {
-                try { mediaSource.endOfStream(); } catch { /* ok */ }
-              }
-              break;
-            }
-            pendingChunks.push(value);
-            appendNext();
-          }
-        } catch (err) {
-          reject(err);
-        }
-      }, { once: true });
-
-      audio.onended = () => resolve(true);
-      audio.onerror = () => reject(new Error('MediaSource playback error'));
-
-      setTimeout(() => { if (!audio.ended) { audio.pause(); resolve(true); } }, 30000);
-    });
-  }
-
-  // ── Batch TTS (WAV) ───────────────────────────────────────────────────────
-  async fetchBatchObjectUrl(text, langInfo, options = {}) {
-    let textToSpeak = text;
-    let targetLangCode = langInfo.code;
-
-    if (langInfo.needsBridge) {
-      try {
-        const r = await fetch('/api/sarvam/translate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ input: text, source_language_code: `${langInfo.originalLang}-IN`, target_language_code: 'hi-IN', model: 'mayura:v1', mode: 'formal' }),
-          signal: AbortSignal.timeout(8000),
-        });
-        const d = await r.json();
-        if (d?.translated_text) { textToSpeak = d.translated_text; targetLangCode = 'hi-IN'; }
-      } catch { targetLangCode = 'en-IN'; }
-    }
-
-    this.currentAbort = new AbortController();
-
-    const resp = await fetch('/api/sarvam/text-to-speech', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        inputs: [textToSpeak],
-        target_language_code: targetLangCode,
-        speaker: options.speaker || VOICE_PROFILE.speakers[targetLangCode] || VOICE_PROFILE.defaultSpeaker,
-        model: VOICE_PROFILE.model,
-      }),
-      signal: this.currentAbort.signal,
-    });
-
-    if (!resp.ok) throw new Error(`Batch TTS HTTP ${resp.status}`);
-    const blob = await resp.blob();
-    if (!blob.size) throw new Error('Empty batch TTS response');
-
-    const cacheKey = this.getCacheKey(text, langInfo.code, options);
-    setAudio(cacheKey, blob).catch(() => {});
-    return URL.createObjectURL(blob);
   }
 
   _addToMemCache(key, url) {

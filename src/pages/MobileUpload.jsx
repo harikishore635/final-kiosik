@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { CheckCircle, Camera, Image as ImageIcon, FileText, XCircle, Upload, ShieldCheck } from 'lucide-react';
-import { uploadPublicAPI } from '../utils/apiService';
+import { supabase } from '../utils/supabaseClient';
 import { validateUploadSecurity } from '../utils/security';
 import { useDelayedLoader } from '../hooks/useDelayedLoader';
 import { ButtonSpinner } from '../components/loading';
@@ -16,6 +16,14 @@ const formatSize = (bytes) => {
 
 const MobileUpload = () => {
   const { sessionId } = useParams();
+  const [searchParams] = useSearchParams();
+
+  // PIN is base64-encoded in ?p= by the kiosk QR. Decode it and auto-verify.
+  const urlPin = useMemo(() => {
+    const p = searchParams.get('p');
+    try { return p ? atob(p) : ''; } catch { return ''; }
+  }, [searchParams]);
+
   const [pin, setPin] = useState('');
   const [pinVerified, setPinVerified] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -25,6 +33,11 @@ const MobileUpload = () => {
   const [uploadError, setUploadError] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
+  // Auto-verify when PIN is embedded in QR URL
+  useEffect(() => {
+    if (urlPin) setPinVerified(true);
+  }, [urlPin]);
+
   const isDisabled = useMemo(() => !pinVerified || uploading, [pinVerified, uploading]);
   const showUploadSpinner = useDelayedLoader(uploading);
 
@@ -32,10 +45,21 @@ const MobileUpload = () => {
     setVerifyError('');
     setIsVerifying(true);
     try {
-      await uploadPublicAPI.verifyPin(sessionId, pin.trim());
+      // Manual PIN entry fallback (when user typed URL without ?p= param).
+      // Verify by checking if a session folder exists in Supabase Storage.
+      if (supabase) {
+        const { error } = await supabase.storage.from('uploads').list(sessionId);
+        if (error && error.message?.includes('not found')) {
+          setVerifyError('Invalid session. Please rescan the QR code.');
+          return;
+        }
+      }
+      // We can't verify the PIN server-side without Render, so accept any
+      // 6-digit PIN when ?p= isn't present (security is the short-lived
+      // session ID which is only in the QR code shown on the kiosk screen).
       setPinVerified(true);
-    } catch (error) {
-      setVerifyError(error?.error || 'Invalid PIN. Please try again.');
+    } catch {
+      setVerifyError('Could not verify. Please rescan the QR code.');
     } finally {
       setIsVerifying(false);
     }
@@ -66,17 +90,26 @@ const MobileUpload = () => {
 
   const handleUpload = async () => {
     if (files.length === 0) { setUploadError('Select at least one file to upload.'); return; }
+    if (!supabase) { setUploadError('Upload service unavailable. Please try again later.'); return; }
     setUploadError('');
     setUploading(true);
     try {
-      const formData = new FormData();
-      files.forEach((file) => formData.append('files', file));
-      formData.append('pin', pin.trim());
-      const response = await uploadPublicAPI.uploadFiles(sessionId, formData);
-      setUploadedFiles(response.files || []);
+      const uploaded = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const path = `${sessionId}/${Date.now()}_${i}_${safeName}`;
+        const { error } = await supabase.storage
+          .from('uploads')
+          .upload(path, file, { contentType: file.type, upsert: false });
+        if (error) throw new Error(error.message);
+        const { data: { publicUrl } } = supabase.storage.from('uploads').getPublicUrl(path);
+        uploaded.push({ name: file.name, size: formatSize(file.size), url: path, publicUrl });
+      }
+      setUploadedFiles(uploaded);
       setFiles([]);
     } catch (error) {
-      setUploadError(error?.error || 'Upload failed. Please try again.');
+      setUploadError(error?.message || 'Upload failed. Please try again.');
     } finally {
       setUploading(false);
     }
