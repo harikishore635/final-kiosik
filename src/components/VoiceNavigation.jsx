@@ -506,27 +506,37 @@ const VoiceNavigation = () => {
             setIsListening(false);
             showFeedback('Processing…');
             vad.pause();
+
+            const wavBlob = float32ToWavBlob(audioFloat32, 16000);
+
+            // Strategy: Sarvam STT first (10-15% WER, trained on Indian languages).
+            // Local Whisper as offline fallback (25-50% WER but works without internet).
+            let transcript = '';
+            let usedProvider = '';
+
+            // 1. Try Sarvam STT (online, much better accuracy for Indic languages)
             try {
-              // Convert Float32Array to Blob for whisperTranscribe
-              const wavBlob = float32ToWavBlob(audioFloat32, 16000);
-              const result = await whisperTranscribe(wavBlob, selectedLang);
-              if (result?.transcript) {
-                setTranscript(result.transcript);
-                processCommand(result.transcript);
-              } else {
-                showFeedback("Didn't catch that — try again");
-                announceNotUnderstood(selectedLang);
-              }
-            } catch {
-              // Fallback to Sarvam STT if Whisper fails
+              const { speechToText } = await import('../utils/sarvamAPI');
+              const r = await speechToText(wavBlob, selectedLang);
+              transcript = r?.transcript || r?.text || '';
+              if (transcript) usedProvider = 'sarvam';
+            } catch { /* offline or quota — fall to local Whisper */ }
+
+            // 2. Local Whisper fallback (offline capable)
+            if (!transcript) {
               try {
-                const wavBlob = float32ToWavBlob(audioFloat32, 16000);
-                const { speechToText } = await import('../utils/sarvamAPI');
-                const r = await speechToText(wavBlob, selectedLang);
-                const text = r?.transcript || r?.text || '';
-                if (text) { setTranscript(text); processCommand(text); }
-                else showFeedback("Didn't catch that — try again");
-              } catch { showFeedback('Could not process speech'); }
+                const result = await whisperTranscribe(wavBlob, selectedLang);
+                transcript = result?.transcript || '';
+                if (transcript) usedProvider = 'whisper';
+              } catch { /* both failed */ }
+            }
+
+            if (transcript) {
+              setTranscript(transcript);
+              processCommand(transcript);
+            } else {
+              showFeedback("Didn't catch that — try again");
+              announceNotUnderstood(selectedLang);
             }
           },
         });

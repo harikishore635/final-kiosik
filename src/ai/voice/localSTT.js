@@ -195,16 +195,36 @@ async function blobToFloat32(blob) {
   }
 }
 
+// ── Navigation domain prompts ─────────────────────────────────────────────────
+// Whisper initial_prompt biases the model toward expected vocabulary.
+// Significant WER reduction for domain-specific command recognition.
+const NAV_PROMPTS = {
+  en: 'electricity water gas health municipal transport complaint grievance back submit next help aadhaar',
+  hi: 'बिजली पानी गैस स्वास्थ्य नगरपालिका परिवहन शिकायत वापस जमा करें आगे आधार',
+  as: 'বিদ্যুৎ পানী গেছ স্বাস্থ্য পৌৰসভা পৰিবহন অভিযোগ উভতি যাওক দাখিল কৰক আধাৰ',
+  bn: 'বিদ্যুৎ জল গ্যাস স্বাস্থ্য পৌরসভা পরিবহন অভিযোগ ফিরে জমা দিন আধার',
+  ta: 'மின்சாரம் தண்ணீர் எரிவாயு சுகாதாரம் நகராட்சி போக்குவரத்து புகார் திரும்பு சமர்பிக்க ஆதார்',
+  te: 'విద్యుత్ నీరు గ్యాస్ ఆరోగ్యం పురపాలక రవాణా ఫిర్యాదు వెనుక సమర్పించు ఆధార్',
+  kn: 'ವಿದ್ಯುತ್ ನೀರು ಗ್ಯಾಸ್ ಆರೋಗ್ಯ ನಗರಪಾಲಿಕೆ ಸಾರಿಗೆ ದೂರು ಹಿಂದೆ ಸಲ್ಲಿಸು ಆಧಾರ್',
+  ml: 'വൈദ്യുതി വെള്ളം ഗ്യാസ് ആരോഗ്യം നഗരസഭ ഗതാഗതം പരാതി മടങ്ങുക സമർപ്പിക്കുക ആധാർ',
+  mr: 'वीज पाणी गॅस आरोग्य नगरपालिका वाहतूक तक्रार परत सबमिट आधार',
+  gu: 'વીજળી પાણી ગેસ આરોગ્ય નગરપાલિકા પરિવહન ફરિયાદ પાછળ સબમિટ આધાર',
+  pa: 'ਬਿਜਲੀ ਪਾਣੀ ਗੈਸ ਸਿਹਤ ਨਗਰਪਾਲਿਕਾ ਟ੍ਰਾਂਸਪੋਰਟ ਸ਼ਿਕਾਇਤ ਵਾਪਸ ਜਮ੍ਹਾਂ ਆਧਾਰ',
+  or: 'ବିଦ୍ୟୁତ ଜଳ ଗ୍ୟାସ ସ୍ୱାସ୍ଥ୍ୟ ନଗରପାଳିକା ପରିବହନ ଅଭିଯୋଗ ଫେରନ୍ତୁ ଦାଖଲ ଆଧାର',
+};
+
 // ── Transcription ─────────────────────────────────────────────────────────────
 
 /**
  * Transcribe an audio Blob using local Whisper.
  *
- * @param {Blob}   audioBlob - WebM or WAV from MediaRecorder / VAD
- * @param {string} language  - ISO 639-1 code (hi, as, ta, etc.)
+ * @param {Blob}    audioBlob    - WebM or WAV from MediaRecorder / VAD
+ * @param {string}  language     - ISO 639-1 code (hi, as, ta, etc.)
+ * @param {object}  [opts]
+ * @param {boolean} [opts.navMode=false] - inject navigation domain prompt for lower WER on commands
  * @returns {Promise<{ transcript: string, provider: string, language: string }>}
  */
-export async function whisperTranscribe(audioBlob, language = 'hi') {
+export async function whisperTranscribe(audioBlob, language = 'hi', opts = {}) {
   const baseLang = (language || 'hi').toLowerCase().split('-')[0];
   const modelId = getModelId(baseLang);
   const pipe = await loadWhisperModel(modelId);
@@ -212,12 +232,18 @@ export async function whisperTranscribe(audioBlob, language = 'hi') {
 
   const audioData = await blobToFloat32(audioBlob);
 
+  const generateKwargs = {};
+  // inject domain prompt when available — biases toward kiosk navigation vocabulary
+  const navPrompt = NAV_PROMPTS[baseLang];
+  if (navPrompt) generateKwargs.initial_prompt = navPrompt;
+
   const result = await pipe(audioData, {
     language: whisperLang,
     task: 'transcribe',
     return_timestamps: false,
     chunk_length_s: 30,
     stride_length_s: 5,
+    ...( Object.keys(generateKwargs).length ? { generate_kwargs: generateKwargs } : {} ),
   });
 
   const transcript = (result?.text || '').trim();
