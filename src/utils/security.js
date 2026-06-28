@@ -149,25 +149,22 @@ export const rateLimit = (key, maxCalls = 5, windowMs = 60000) => {
 
 // File upload security validation
 export const validateUploadSecurity = (file) => {
-  const maxSize = 10 * 1024 * 1024; // 10MB
+  const maxSize = 5 * 1024 * 1024; // 5MB
   const allowedTypes = [
     'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'image/jpeg',
     'image/png',
-    'image/webp',
   ];
   const dangerousExtensions = ['.exe', '.bat', '.cmd', '.scr', '.js', '.vbs', '.ps1'];
-  
+
   const errors = [];
-  
+
   if (file.size > maxSize) {
-    errors.push('File exceeds 10MB limit');
+    errors.push('File exceeds 5MB limit');
   }
-  
+
   if (!allowedTypes.includes(file.type)) {
-    errors.push('Invalid file type');
+    errors.push('Invalid file type. Allowed: PDF, JPG, PNG only');
   }
   
   const fileName = file.name.toLowerCase();

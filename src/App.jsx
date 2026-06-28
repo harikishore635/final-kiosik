@@ -102,6 +102,8 @@ function AIShell({ children }) {
   const navigate = useNavigate();
   const { userMode } = useAccessibility();
   const { resetSession } = useSession();
+
+  const isMobileUpload = path.startsWith('/mobile-upload/');
   const isBlind = userMode === 'blind';
   const isAdminPath = path.startsWith('/admin') || path.startsWith('/super-admin') ||
     path.startsWith('/security') || path.startsWith('/kiosk-ops') || path.startsWith('/org/');
@@ -110,20 +112,15 @@ function AIShell({ children }) {
 
   const [attractOn, setAttractOn] = useState(false);
 
-  // Citizen-facing service pages only — never on auth/onboarding, admin, or the
-  // standalone /attract route.
-  const inCitizenSession = !isAdminPath && !isAuthPath && path !== '/attract';
+  // Disable kiosk idle timers on mobile upload (phone page — not a kiosk session)
+  const inCitizenSession = !isAdminPath && !isAuthPath && !isMobileUpload && path !== '/attract';
 
-  // After 3 min idle, raise the attract overlay. It sits on top of the current
-  // page (which stays mounted), so any in-progress form survives; one touch
-  // dismisses it in place — attract never resets progress.
   useIdleRearm({
     timeoutMs: ATTRACT_IDLE_MS,
     enabled: inCitizenSession,
     onIdle: () => setAttractOn(true),
   });
 
-  // Only a real 30-min inactivity timeout ends the session and returns to login.
   useIdleRearm({
     timeoutMs: SESSION_TIMEOUT_MS,
     enabled: inCitizenSession,
@@ -139,8 +136,12 @@ function AIShell({ children }) {
     },
   });
 
-  // Drop the overlay whenever the route changes (e.g. after a timeout redirect).
   useEffect(() => { setAttractOn(false); }, [path]);
+
+  // Mobile upload — render children with no kiosk chrome (all hooks already ran above)
+  if (isMobileUpload) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="kiosk-stage">
@@ -221,7 +222,7 @@ export default function App() {
               <Route path="/schemes"               element={<SchemeDiscovery />} />
               <Route path="/family-profile"        element={<FamilyProfile />} />
               <Route path="/dashboard"             element={<Dashboard />} />
-              <Route path="/upload/:token"         element={<MobileUpload />} />
+              <Route path="/mobile-upload/:sessionId" element={<MobileUpload />} />
 
               {/* Admin routes */}
               <Route path="/admin-login"         element={<AdminLogin />} />

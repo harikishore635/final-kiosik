@@ -241,7 +241,7 @@ const QRUpload = ({
                 Scan QR code from your phone to upload documents
               </p>
               <p className="text-sm text-gray-400 mb-4">
-                Supported: PDF, DOC, DOCX, JPG, PNG (Max 10MB each, up to {maxFiles} files)
+                Supported: PDF, JPG, PNG only · Max 5 MB each · Up to {maxFiles} files
               </p>
               <button
                 onClick={handleShowQR}

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { CheckCircle, Camera, Image as ImageIcon, FileText, XCircle } from 'lucide-react';
+import { CheckCircle, Camera, Image as ImageIcon, FileText, XCircle, Upload, ShieldCheck } from 'lucide-react';
 import { uploadPublicAPI } from '../utils/apiService';
 import { validateUploadSecurity } from '../utils/security';
 import { useDelayedLoader } from '../hooks/useDelayedLoader';
@@ -26,8 +26,6 @@ const MobileUpload = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
 
   const isDisabled = useMemo(() => !pinVerified || uploading, [pinVerified, uploading]);
-  // Real network upload with variable latency — gate the spinner so a fast
-  // response (<300ms) never flashes it.
   const showUploadSpinner = useDelayedLoader(uploading);
 
   const handleVerifyPin = async () => {
@@ -45,16 +43,13 @@ const MobileUpload = () => {
 
   const addFiles = (selectedFiles) => {
     setUploadError('');
-
     const incoming = Array.from(selectedFiles || []);
     if (incoming.length === 0) return;
-
     const availableSlots = MAX_FILES - files.length;
     if (availableSlots <= 0) {
       setUploadError(`Maximum ${MAX_FILES} files allowed.`);
       return;
     }
-
     const next = [];
     for (const file of incoming.slice(0, availableSlots)) {
       const validation = validateUploadSecurity(file);
@@ -64,29 +59,19 @@ const MobileUpload = () => {
       }
       next.push(file);
     }
-
-    if (next.length > 0) {
-      setFiles((prev) => [...prev, ...next]);
-    }
+    if (next.length > 0) setFiles((prev) => [...prev, ...next]);
   };
 
-  const removeFile = (index) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  };
+  const removeFile = (index) => setFiles((prev) => prev.filter((_, i) => i !== index));
 
   const handleUpload = async () => {
-    if (files.length === 0) {
-      setUploadError('Select at least one file to upload.');
-      return;
-    }
-
+    if (files.length === 0) { setUploadError('Select at least one file to upload.'); return; }
     setUploadError('');
     setUploading(true);
     try {
       const formData = new FormData();
       files.forEach((file) => formData.append('files', file));
       formData.append('pin', pin.trim());
-
       const response = await uploadPublicAPI.uploadFiles(sessionId, formData);
       setUploadedFiles(response.files || []);
       setFiles([]);
@@ -99,152 +84,322 @@ const MobileUpload = () => {
 
   if (!sessionId) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 px-5 py-8">
-        <div className="max-w-md mx-auto bg-white rounded-xl border p-6">
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Invalid upload link</h1>
-          <p className="text-sm text-gray-600">Please rescan the QR code from the kiosk.</p>
+      <div style={s.page}>
+        <div style={s.header}><HeaderContent /></div>
+        <div style={s.card}>
+          <p style={{ color: '#dc2626', fontWeight: 600 }}>Invalid upload link.</p>
+          <p style={{ color: '#6b7280', fontSize: 14, marginTop: 8 }}>Please rescan the QR code from the kiosk.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 px-5 py-8">
-      <div className="max-w-md mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Secure Upload</h1>
-        <p className="text-sm text-gray-600 mb-6">
-          Enter the 6-digit PIN shown on the kiosk, then upload your files.
-        </p>
+    <div style={s.page}>
+      <div style={s.header}>
+        <HeaderContent />
+      </div>
 
-        {!pinVerified && (
-          <div className="bg-white rounded-xl shadow-sm border p-4 mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Kiosk PIN</label>
-            <input
-              type="tel"
-              inputMode="numeric"
-              maxLength={6}
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-              className="w-full border rounded-lg px-4 py-3 text-lg tracking-widest text-center"
-              placeholder="------"
-            />
-            {verifyError && (
-              <p className="text-sm text-red-600 mt-2">{verifyError}</p>
-            )}
-            <button
-              type="button"
-              onClick={handleVerifyPin}
-              disabled={isVerifying || pin.trim().length !== 6}
-              className="mt-4 w-full bg-government-blue text-white py-3 rounded-lg font-semibold disabled:opacity-50"
-            >
-              {isVerifying ? 'Verifying...' : 'Verify PIN'}
-            </button>
+      <div style={s.body}>
+        {uploadedFiles.length > 0 ? (
+          <div style={{ ...s.card, borderColor: '#16a34a', background: '#f0fdf4' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <CheckCircle size={24} color="#16a34a" />
+              <span style={{ fontWeight: 700, color: '#15803d', fontSize: 18 }}>Upload Complete!</span>
+            </div>
+            <p style={{ color: '#166534', fontSize: 14, marginBottom: 12 }}>
+              Your files have been sent to the kiosk. You may close this page.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {uploadedFiles.map((file, i) => (
+                <div key={i} style={s.fileRow}>
+                  <FileText size={16} color="#16a34a" />
+                  <span style={{ fontSize: 13, color: '#166534', flex: 1 }}>{file.name}</span>
+                  <span style={{ fontSize: 12, color: '#4ade80' }}>{file.size}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
-
-        {pinVerified && (
-          <div className="bg-white rounded-xl shadow-sm border p-4 mb-6">
-            <div className="flex items-center gap-2 text-green-700 mb-3">
-              <CheckCircle className="w-5 h-5" />
-              <span className="text-sm font-semibold">PIN verified</span>
+        ) : (
+          <>
+            {/* Step 1 — PIN */}
+            <div style={{ ...s.card, opacity: pinVerified ? 0.5 : 1 }}>
+              <div style={s.stepLabel}>
+                <span style={s.stepBadge}>{pinVerified ? '✓' : '1'}</span>
+                <span style={s.stepTitle}>Enter Kiosk PIN</span>
+              </div>
+              {!pinVerified ? (
+                <>
+                  <p style={s.hint}>Enter the 6-digit PIN shown on the kiosk screen.</p>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                    style={s.pinInput}
+                    placeholder="• • • • • •"
+                    autoFocus
+                  />
+                  {verifyError && <p style={s.error}>{verifyError}</p>}
+                  <button
+                    type="button"
+                    onClick={handleVerifyPin}
+                    disabled={isVerifying || pin.trim().length !== 6}
+                    style={{ ...s.btnPrimary, opacity: (isVerifying || pin.trim().length !== 6) ? 0.5 : 1 }}
+                  >
+                    {isVerifying ? 'Verifying…' : 'Verify PIN'}
+                  </button>
+                </>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#16a34a' }}>
+                  <CheckCircle size={18} />
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>PIN verified</span>
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 gap-3">
-              <label className={`flex items-center gap-3 border rounded-lg px-4 py-3 ${isDisabled ? 'opacity-50' : 'cursor-pointer'}`}>
-                <ImageIcon className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium">Choose from gallery</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  disabled={isDisabled}
-                  className="hidden"
-                  onChange={(e) => addFiles(e.target.files)}
-                />
-              </label>
+            {/* Step 2 — Select files */}
+            {pinVerified && (
+              <div style={s.card}>
+                <div style={s.stepLabel}>
+                  <span style={s.stepBadge}>2</span>
+                  <span style={s.stepTitle}>Select Files to Upload</span>
+                </div>
+                <p style={s.hint}>PDF · JPG · PNG only · Max 5 MB per file · Up to {MAX_FILES} files</p>
 
-              <label className={`flex items-center gap-3 border rounded-lg px-4 py-3 ${isDisabled ? 'opacity-50' : 'cursor-pointer'}`}>
-                <Camera className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium">Take a photo</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  disabled={isDisabled}
-                  className="hidden"
-                  onChange={(e) => addFiles(e.target.files)}
-                />
-              </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+                  <FilePickerBtn
+                    icon={<Camera size={20} color="#1d4ed8" />}
+                    label="Take a Photo"
+                    accept="image/jpeg,image/png"
+                    capture="environment"
+                    disabled={isDisabled}
+                    onChange={(e) => addFiles(e.target.files)}
+                  />
+                  <FilePickerBtn
+                    icon={<ImageIcon size={20} color="#1d4ed8" />}
+                    label="Choose from Gallery (JPG / PNG)"
+                    accept="image/jpeg,image/png"
+                    multiple
+                    disabled={isDisabled}
+                    onChange={(e) => addFiles(e.target.files)}
+                  />
+                  <FilePickerBtn
+                    icon={<FileText size={20} color="#1d4ed8" />}
+                    label="Upload PDF Document"
+                    accept="application/pdf"
+                    multiple
+                    disabled={isDisabled}
+                    onChange={(e) => addFiles(e.target.files)}
+                  />
+                </div>
 
-              <label className={`flex items-center gap-3 border rounded-lg px-4 py-3 ${isDisabled ? 'opacity-50' : 'cursor-pointer'}`}>
-                <FileText className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium">Upload a document (PDF/DOC)</span>
-                <input
-                  type="file"
-                  accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  multiple
-                  disabled={isDisabled}
-                  className="hidden"
-                  onChange={(e) => addFiles(e.target.files)}
-                />
-              </label>
-            </div>
+                {uploadError && <p style={s.error}>{uploadError}</p>}
 
-            {uploadError && (
-              <p className="text-sm text-red-600 mt-3">{uploadError}</p>
-            )}
-
-            {files.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {files.map((file, index) => (
-                  <div key={`${file.name}-${index}`} className="flex items-center justify-between border rounded-lg px-3 py-2">
-                    <div>
-                      <p className="text-sm font-medium text-gray-800 truncate max-w-[220px]">{file.name}</p>
-                      <p className="text-xs text-gray-500">{formatSize(file.size)}</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeFile(index)}
-                      className="text-red-500"
-                    >
-                      <XCircle className="w-5 h-5" />
-                    </button>
+                {files.length > 0 && (
+                  <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {files.map((file, index) => (
+                      <div key={`${file.name}-${index}`} style={s.fileRow}>
+                        <FileText size={15} color="#6b7280" />
+                        <span style={{ fontSize: 13, color: '#374151', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {file.name}
+                        </span>
+                        <span style={{ fontSize: 12, color: '#9ca3af', marginRight: 8 }}>{formatSize(file.size)}</span>
+                        <button type="button" onClick={() => removeFile(index)} style={s.removeBtn}>
+                          <XCircle size={18} color="#ef4444" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleUpload}
+                  disabled={isDisabled || files.length === 0}
+                  style={{ ...s.btnPrimary, marginTop: 16, opacity: (isDisabled || files.length === 0) ? 0.45 : 1 }}
+                >
+                  {showUploadSpinner
+                    ? <><ButtonSpinner variant="primary" /> Uploading…</>
+                    : <><Upload size={18} /> Upload to Kiosk ({files.length} file{files.length !== 1 ? 's' : ''})</>
+                  }
+                </button>
               </div>
             )}
-
-            <button
-              type="button"
-              onClick={handleUpload}
-              disabled={isDisabled || files.length === 0}
-              className="mt-4 w-full bg-government-blue text-white py-3 rounded-lg font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {showUploadSpinner && <ButtonSpinner variant="primary" />}
-              {uploading ? 'Uploading...' : 'Upload to kiosk'}
-            </button>
-          </div>
+          </>
         )}
 
-        {uploadedFiles.length > 0 && (
-          <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-green-700 mb-2">
-              <CheckCircle className="w-5 h-5" />
-              <span className="font-semibold">Upload complete</span>
-            </div>
-            <p className="text-sm text-green-700">
-              Your files have been sent to the kiosk. You can close this page.
-            </p>
-            <ul className="mt-3 space-y-1 text-sm text-green-800">
-              {uploadedFiles.map((file, index) => (
-                <li key={`${file.name}-${index}`}>{file.name} ({file.size})</li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <div style={s.securityNote}>
+          <ShieldCheck size={14} color="#6b7280" />
+          <span style={{ fontSize: 12, color: '#6b7280' }}>Secured by SUVIDHA · Files encrypted in transit</span>
+        </div>
       </div>
     </div>
   );
+};
+
+function HeaderContent() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '24px 20px 20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+          🇮🇳
+        </div>
+        <span style={{ color: 'white', fontWeight: 800, fontSize: 22, letterSpacing: 2 }}>SUVIDHA</span>
+      </div>
+      <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>Government of Assam · Secure Document Upload</span>
+    </div>
+  );
+}
+
+function FilePickerBtn({ icon, label, accept, capture, multiple, disabled, onChange }) {
+  return (
+    <label style={{ ...s.filePickerBtn, opacity: disabled ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}>
+      {icon}
+      <span style={{ fontSize: 14, fontWeight: 500, color: '#1e3a5f' }}>{label}</span>
+      <input
+        type="file"
+        accept={accept}
+        capture={capture}
+        multiple={multiple}
+        disabled={disabled}
+        className="hidden"
+        style={{ display: 'none' }}
+        onChange={onChange}
+      />
+    </label>
+  );
+}
+
+const s = {
+  page: {
+    minHeight: '100vh',
+    background: '#f8fafc',
+    display: 'flex',
+    flexDirection: 'column',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  },
+  header: {
+    background: 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #2563eb 100%)',
+    boxShadow: '0 4px 16px rgba(30,58,138,0.3)',
+  },
+  body: {
+    flex: 1,
+    padding: '20px 16px 32px',
+    maxWidth: 480,
+    width: '100%',
+    margin: '0 auto',
+    boxSizing: 'border-box',
+  },
+  card: {
+    background: 'white',
+    borderRadius: 16,
+    border: '1.5px solid #e2e8f0',
+    padding: '20px 16px',
+    marginBottom: 16,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+  },
+  stepLabel: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  stepBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: '50%',
+    background: '#1e3a8a',
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 13,
+    fontWeight: 700,
+    flexShrink: 0,
+  },
+  stepTitle: {
+    fontWeight: 700,
+    fontSize: 16,
+    color: '#1e293b',
+  },
+  hint: {
+    fontSize: 13,
+    color: '#64748b',
+    marginBottom: 12,
+    lineHeight: 1.5,
+  },
+  pinInput: {
+    width: '100%',
+    border: '2px solid #cbd5e1',
+    borderRadius: 12,
+    padding: '14px 0',
+    fontSize: 28,
+    fontWeight: 700,
+    letterSpacing: 14,
+    textAlign: 'center',
+    outline: 'none',
+    boxSizing: 'border-box',
+    color: '#1e3a8a',
+  },
+  btnPrimary: {
+    width: '100%',
+    background: 'linear-gradient(135deg, #1e3a8a, #2563eb)',
+    color: 'white',
+    border: 'none',
+    borderRadius: 12,
+    padding: '14px 0',
+    fontSize: 16,
+    fontWeight: 700,
+    cursor: 'pointer',
+    marginTop: 14,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    boxShadow: '0 4px 12px rgba(37,99,235,0.3)',
+  },
+  filePickerBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+    border: '1.5px solid #dbeafe',
+    borderRadius: 12,
+    padding: '14px 16px',
+    background: '#eff6ff',
+    transition: 'background 0.15s',
+  },
+  fileRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    border: '1px solid #e2e8f0',
+    borderRadius: 10,
+    padding: '10px 12px',
+    background: '#f8fafc',
+  },
+  removeBtn: {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    padding: 0,
+    display: 'flex',
+    alignItems: 'center',
+  },
+  error: {
+    color: '#dc2626',
+    fontSize: 13,
+    marginTop: 8,
+    fontWeight: 500,
+  },
+  securityNote: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 8,
+  },
 };
 
 export default MobileUpload;

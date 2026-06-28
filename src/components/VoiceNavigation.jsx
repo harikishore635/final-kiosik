@@ -475,7 +475,10 @@ const VoiceNavigation = () => {
     }
 
     try {
-      if (!!(window.SpeechRecognition || window.webkitSpeechRecognition) && startBrowserRecognition()) {
+      const selectedLang = getBaseLang(i18n.language);
+      // hi/en/as use local Whisper (better accuracy) — skip browser STT for these
+      const LOCAL_STT_LANGS = new Set(['hi', 'en', 'as']);
+      if (!LOCAL_STT_LANGS.has(selectedLang) && !!(window.SpeechRecognition || window.webkitSpeechRecognition) && startBrowserRecognition()) {
         return;
       }
 
@@ -483,7 +486,6 @@ const VoiceNavigation = () => {
       try {
         const { MicVAD } = await import('@ricky0123/vad-web');
         const { whisperTranscribe } = await import('../ai/voice/localSTT.js');
-        const selectedLang = getBaseLang(i18n.language);
 
         if (vadRef.current) { try { vadRef.current.destroy(); } catch { /* ok */ } }
 

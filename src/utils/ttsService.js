@@ -228,25 +228,7 @@ class TTSService {
         }
       } catch { /* IndexedDB unavailable */ }
 
-      // 3. Sarvam streaming TTS (~200ms latency)
-      try {
-        await this.playStreaming(item.text, langInfo, item.options);
-        return;
-      } catch (streamErr) {
-        console.warn('[TTS] Streaming failed, trying batch fallback:', streamErr.message);
-      }
-
-      // 4. Batch TTS fallback
-      try {
-        const url = await this.fetchBatchObjectUrl(item.text, langInfo, item.options);
-        this._addToMemCache(cacheKey, url);
-        await this.playAudioFromObjectUrl(url, item.options?.volume);
-        return;
-      } catch (batchErr) {
-        console.warn('[TTS] Batch TTS failed, trying offline model:', batchErr.message);
-      }
-
-      // 4b. Offline MMS-TTS model (currently Hindi only — see offlineTTS.js).
+      // 3. Offline MMS-TTS model (currently Hindi only — see offlineTTS.js).
       // Covers the gap Browser SpeechSynthesis leaves: that tier depends on
       // the device having a Hindi voice installed, which isn't guaranteed.
       try {

@@ -66,11 +66,18 @@ export default function LanguageSelection() {
     return () => clearInterval(id);
   }, []);
 
+  const LOCAL_WHISPER_LANGS = new Set(['hi', 'en', 'as']);
+
   const handlePick = async (lang) => {
     setLanguage(lang.sarvam);           // session language (drives TTS speaker + STT)
     try { await changeLanguageSafe(lang.ui); } catch { /* UI strings best-effort */ }
     sessionStorage.setItem('userLanguage', lang.ui);
     document.documentElement.lang = lang.ui;
+
+    if (LOCAL_WHISPER_LANGS.has(lang.ui)) {
+      import('../ai/voice/localSTT.js').then(m => m.loadWhisper()).catch(() => {});
+    }
+
     navigate('/voice-select');
   };
 
