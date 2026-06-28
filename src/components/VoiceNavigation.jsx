@@ -477,7 +477,13 @@ const VoiceNavigation = () => {
     try {
       const selectedLang = getBaseLang(i18n.language);
       // hi/en/as use local Whisper (better accuracy) — skip browser STT for these
-      const LOCAL_STT_LANGS = new Set(['hi', 'en', 'as']);
+      // All Indian languages use local Whisper — browser SpeechRecognition
+      // has poor Indic support and requires internet. Local is better for all.
+      const LOCAL_STT_LANGS = new Set([
+        'hi', 'en', 'as',                              // high priority
+        'ta', 'te', 'kn', 'bn', 'ml', 'mr', 'gu', 'pa', 'or', // major Indic
+        'ur', 'ne', 'sd', 'mai', 'kok', 'doi', 'sa', 'brx', 'ks', 'mni', 'sat', // bridge
+      ]);
       if (!LOCAL_STT_LANGS.has(selectedLang) && !!(window.SpeechRecognition || window.webkitSpeechRecognition) && startBrowserRecognition()) {
         return;
       }
@@ -485,7 +491,9 @@ const VoiceNavigation = () => {
       // Silero VAD → Whisper: auto-detects speech boundaries, removes noise
       try {
         const { MicVAD } = await import('@ricky0123/vad-web');
-        const { whisperTranscribe } = await import('../ai/voice/localSTT.js');
+        const { whisperTranscribe, loadWhisperForLang } = await import('../ai/voice/localSTT.js');
+        // Warm the correct model for this language in the background
+        loadWhisperForLang(selectedLang).catch(() => {});
 
         if (vadRef.current) { try { vadRef.current.destroy(); } catch { /* ok */ } }
 

@@ -1,43 +1,59 @@
 /**
  * localSTT.js — Offline Whisper STT via transformers.js
  *
- * Model: Xenova/whisper-small (quantized int8) — 67MB download, ~200MB RAM
- * Runs entirely in browser via WebAssembly. No API key, no internet required.
+ * Model tiers (all quantized int8, cached in browser IndexedDB forever):
+ *   whisper-small.en      ~40 MB  — English-only, fastest + most accurate for EN
+ *   whisper-large-v3-turbo ~500 MB — Best for low-resource langs (Assamese)
+ *   whisper-medium        ~240 MB  — All major Indian languages
+ *   whisper-small         ~67 MB   — Bridge/Devanagari-fallback languages
  *
- * 22 Indian Languages support:
- *   Native (15): hi, en, as, bn, ta, te, kn, ml, mr, gu, pa, or, ur, ne, sd
- *   Fallback to Hindi (7): mai, kok, doi, sa, brx, ks, mni, sat
- *
- * First load: ~15s (67MB download, cached in browser IndexedDB forever after)
- * Subsequent loads: ~2s (from cache)
+ * First load downloads model; subsequent loads serve from IndexedDB cache.
  */
 
 import { pipeline, env } from '@huggingface/transformers';
 
-// Use browser cache (IndexedDB) — persists across sessions
+// Use browser IndexedDB cache — persists across sessions
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-// NOTE: do NOT set env.backends.onnx.wasm.wasmPaths = '/' here. Vite's dev
-// server refuses to import .mjs files from /public as ES modules ("should
-// not be imported from source code... only referenced via HTML tags") and
-// throws a 500 that blocks the whole UI. Confirmed live — breaks the app on
-// every load. The ~50-80MB duplicate onnxruntime-web runtime (one bundled
-// by transformers.js, one by vad-web) is accepted as known tech debt; fixing
-// it requires a different approach (e.g. a Vite plugin or CDN-hosted wasm),
-// not a raw /public override.
+// ── Model IDs ────────────────────────────────────────────────────────────────
+const MODEL_EN_ONLY     = 'Xenova/whisper-small.en';       // English-only, ~40MB
+const MODEL_LARGE_TURBO = 'Xenova/whisper-large-v3-turbo'; // Best for low-resource (as), ~500MB
+const MODEL_MEDIUM      = 'Xenova/whisper-medium';          // Major Indic langs, ~240MB
+const MODEL_SMALL       = 'Xenova/whisper-small';           // Bridge/fallback langs, ~67MB
 
-// Model selection per language:
-//   medium (244MB int8 ≈ 61MB) → Assamese, Bengali, Hindi, English, Tamil — need higher accuracy
-//   small  (67MB int8) → other languages — adequate for keyword navigation
-const HIGH_PRIORITY_LANGS = new Set(['as', 'bn', 'hi', 'en', 'ta', 'te']);
+// ── Language → model assignment ───────────────────────────────────────────────
+// Priority order: as > hi > en > major Indic > bridge
+const LANG_MODEL_MAP = {
+  // High-priority: best models for top 3 languages
+  en:  MODEL_EN_ONLY,       // English-only model — fastest, most accurate for English
+  as:  MODEL_LARGE_TURBO,   // Assamese is low-resource — needs large model for accuracy
+  hi:  MODEL_MEDIUM,        // Hindi — well covered by medium
 
-function getModelId(lang) {
-  const base = (lang || 'hi').toLowerCase().split('-')[0];
-  return HIGH_PRIORITY_LANGS.has(base) ? 'Xenova/whisper-medium' : 'Xenova/whisper-small';
-}
+  // Major Indian languages — all get medium model
+  bn:  MODEL_MEDIUM,        // Bengali
+  ta:  MODEL_MEDIUM,        // Tamil
+  te:  MODEL_MEDIUM,        // Telugu
+  kn:  MODEL_MEDIUM,        // Kannada
+  ml:  MODEL_MEDIUM,        // Malayalam
+  mr:  MODEL_MEDIUM,        // Marathi
+  gu:  MODEL_MEDIUM,        // Gujarati
+  pa:  MODEL_MEDIUM,        // Punjabi
+  or:  MODEL_MEDIUM,        // Odia
 
-const MODEL_ID = 'Xenova/whisper-small'; // kept for loadWhisper() backward compat
+  // Bridge langs (not in Whisper's 100-language set — transcribed via closest script)
+  ur:  MODEL_SMALL,         // Urdu → Arabic script, close to Urdu Whisper token
+  ne:  MODEL_SMALL,         // Nepali → Devanagari
+  sd:  MODEL_SMALL,         // Sindhi
+  mai: MODEL_SMALL,         // Maithili → Devanagari, Hindi bridge
+  kok: MODEL_SMALL,         // Konkani → Devanagari
+  doi: MODEL_SMALL,         // Dogri → Devanagari
+  sa:  MODEL_SMALL,         // Sanskrit → Devanagari
+  brx: MODEL_SMALL,         // Bodo → Devanagari
+  ks:  MODEL_SMALL,         // Kashmiri → Perso-Arabic (Urdu bridge)
+  mni: MODEL_SMALL,         // Manipuri → Bengali script bridge
+  sat: MODEL_SMALL,         // Santali → Bengali script bridge
+};
 
 // Whisper uses full English language names, not ISO codes
 const WHISPER_LANG_MAP = {
@@ -56,33 +72,35 @@ const WHISPER_LANG_MAP = {
   ur: 'urdu',
   ne: 'nepali',
   sd: 'sindhi',
-  // Tier-2: not in Whisper's 100 languages — use Hindi as closest Devanagari match
+  // Bridge langs: map to closest Whisper language
   mai: 'hindi',
   kok: 'hindi',
   doi: 'hindi',
   sa:  'hindi',
   brx: 'hindi',
-  ks:  'urdu',   // Kashmiri script is Perso-Arabic, closest is Urdu
-  mni: 'bengali', // Manipuri uses Bengali script
-  sat: 'bengali', // Santali uses Ol Chiki but Bengali fallback works
+  ks:  'urdu',
+  mni: 'bengali',
+  sat: 'bengali',
 };
 
-// Cache per model ID so medium + small can coexist in memory
+function getModelId(baseLang) {
+  return LANG_MODEL_MAP[baseLang] || MODEL_SMALL;
+}
+
+// ── Pipeline cache — one per model ID ────────────────────────────────────────
 const _pipes = {};
 const _loadPromises = {};
 let _loadProgress = 0;
 
-/**
- * Load Whisper pipeline. Returns immediately if already loaded.
- * Dispatches progress events for UI feedback.
- */
 async function loadWhisperModel(modelId, onProgress) {
   if (_pipes[modelId]) return _pipes[modelId];
   if (_loadPromises[modelId]) return _loadPromises[modelId];
 
   _loadPromises[modelId] = (async () => {
     try {
-      window.dispatchEvent(new CustomEvent('suvidha:whisper-loading', { detail: { progress: 0, model: modelId } }));
+      window.dispatchEvent(new CustomEvent('suvidha:whisper-loading', {
+        detail: { progress: 0, model: modelId },
+      }));
       _pipes[modelId] = await pipeline(
         'automatic-speech-recognition',
         modelId,
@@ -93,15 +111,21 @@ async function loadWhisperModel(modelId, onProgress) {
               const pct = info.total > 0 ? Math.round((info.loaded / info.total) * 100) : 0;
               _loadProgress = pct;
               onProgress?.(pct, info.file);
-              window.dispatchEvent(new CustomEvent('suvidha:whisper-loading', { detail: { progress: pct, file: info.file, model: modelId } }));
+              window.dispatchEvent(new CustomEvent('suvidha:whisper-loading', {
+                detail: { progress: pct, file: info.file, model: modelId },
+              }));
             } else if (info.status === 'ready') {
               _loadProgress = 100;
-              window.dispatchEvent(new CustomEvent('suvidha:whisper-ready', { detail: { model: modelId } }));
+              window.dispatchEvent(new CustomEvent('suvidha:whisper-ready', {
+                detail: { model: modelId },
+              }));
             }
           },
         }
       );
-      window.dispatchEvent(new CustomEvent('suvidha:whisper-ready', { detail: { model: modelId } }));
+      window.dispatchEvent(new CustomEvent('suvidha:whisper-ready', {
+        detail: { model: modelId },
+      }));
       return _pipes[modelId];
     } catch (err) {
       delete _loadPromises[modelId];
@@ -112,22 +136,27 @@ async function loadWhisperModel(modelId, onProgress) {
   return _loadPromises[modelId];
 }
 
-// Backward-compat: preload default small model
-export async function loadWhisper(onProgress) {
-  return loadWhisperModel(MODEL_ID, onProgress);
+/**
+ * Preload the Whisper model for a specific language.
+ * Called when the user selects a language so the model is warm before first use.
+ */
+export async function loadWhisperForLang(lang, onProgress) {
+  const baseLang = (lang || 'hi').toLowerCase().split('-')[0];
+  const modelId = getModelId(baseLang);
+  return loadWhisperModel(modelId, onProgress);
 }
 
-export function isWhisperLoaded() {
-  return _pipe !== null;
+/** Backward-compat: preload the default small model. */
+export async function loadWhisper(onProgress) {
+  return loadWhisperModel(MODEL_SMALL, onProgress);
 }
 
 export function getWhisperLoadProgress() {
   return _loadProgress;
 }
 
-/**
- * Resample Float32Array from sourceRate to 16000 Hz (Whisper requirement).
- */
+// ── Audio utilities ───────────────────────────────────────────────────────────
+
 function resampleTo16k(audioData, sourceRate) {
   if (sourceRate === 16000) return audioData;
   const ratio = sourceRate / 16000;
@@ -143,9 +172,6 @@ function resampleTo16k(audioData, sourceRate) {
   return result;
 }
 
-/**
- * Decode audio Blob → Float32Array at 16kHz for Whisper input.
- */
 async function blobToFloat32(blob) {
   const arrayBuffer = await blob.arrayBuffer();
   const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
@@ -154,7 +180,6 @@ async function blobToFloat32(blob) {
     try {
       audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
     } catch {
-      // Some WebM formats need a different approach
       const offlineCtx = new OfflineAudioContext(1, 16000, 16000);
       audioBuffer = await offlineCtx.decodeAudioData(arrayBuffer.slice(0));
     }
@@ -165,12 +190,14 @@ async function blobToFloat32(blob) {
   }
 }
 
+// ── Transcription ─────────────────────────────────────────────────────────────
+
 /**
  * Transcribe an audio Blob using local Whisper.
  *
- * @param {Blob} audioBlob - WebM or WAV audio from MediaRecorder
- * @param {string} language - ISO 639-1 code (hi, as, mai, brx, etc.)
- * @returns {Promise<{ transcript: string, provider: string }>}
+ * @param {Blob}   audioBlob - WebM or WAV from MediaRecorder / VAD
+ * @param {string} language  - ISO 639-1 code (hi, as, ta, etc.)
+ * @returns {Promise<{ transcript: string, provider: string, language: string }>}
  */
 export async function whisperTranscribe(audioBlob, language = 'hi') {
   const baseLang = (language || 'hi').toLowerCase().split('-')[0];

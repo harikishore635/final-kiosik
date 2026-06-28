@@ -68,16 +68,25 @@ export default function LanguageSelection() {
     return () => clearInterval(id);
   }, []);
 
-  const LOCAL_WHISPER_LANGS = new Set(['hi', 'en', 'as']);
+  // All Indic + English get local Whisper. Preload the language-specific model
+  // (correct size tier) as soon as user picks language so it's warm by first use.
+  const LOCAL_WHISPER_LANGS = new Set([
+    'hi', 'en', 'as',
+    'ta', 'te', 'kn', 'bn', 'ml', 'mr', 'gu', 'pa', 'or',
+    'ur', 'ne', 'sd', 'mai', 'kok', 'doi', 'sa', 'brx', 'ks', 'mni', 'sat',
+  ]);
 
   const handlePick = async (lang) => {
-    setLanguage(lang.sarvam);           // session language (drives TTS speaker + STT)
+    setLanguage(lang.sarvam);
     try { await changeLanguageSafe(lang.ui); } catch { /* UI strings best-effort */ }
     sessionStorage.setItem('userLanguage', lang.ui);
     document.documentElement.lang = lang.ui;
 
     if (LOCAL_WHISPER_LANGS.has(lang.ui)) {
-      import('../ai/voice/localSTT.js').then(m => m.loadWhisper()).catch(() => {});
+      // loadWhisperForLang picks the correct model tier for this language
+      import('../ai/voice/localSTT.js')
+        .then(m => m.loadWhisperForLang(lang.ui))
+        .catch(() => {});
     }
 
     navigate(returnTo || '/voice-select', { replace: Boolean(returnTo) });
