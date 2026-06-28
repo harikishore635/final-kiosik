@@ -6,10 +6,10 @@
  * the LLM never directly mutates state.
  */
 
+// Only destructive/irreversible actions need confirmation.
+// Navigation, form fill, language switch etc. are safe and execute instantly.
 const REQUIRES_CONFIRMATION = new Set([
-  'NAVIGATE_PAGE', 'START_NAVIGATION', 'SHOW_NEARBY', 'SEARCH_OFFICES',
-  'FILL_FORM', 'SUBMIT_FORM', 'SWITCH_LANGUAGE', 'READ_PAGE',
-  'SCROLL_PAGE', 'ZOOM_MAP', 'PAY_BILL', 'DELETE_DATA', 'ADMIN_ACTION',
+  'SUBMIT_FORM', 'PAY_BILL', 'DELETE_DATA', 'ADMIN_ACTION',
 ]);
 
 export const INTENT_TO_PATH = {
