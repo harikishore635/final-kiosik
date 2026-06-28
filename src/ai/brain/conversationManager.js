@@ -97,9 +97,15 @@ function normaliseAIResponse(raw, fallbackLanguage = 'en') {
     return buildErrorResponse('Invalid AI response format.', fallbackLanguage);
   }
 
+  const response = raw.response || 'I am here to help. How can I assist you?';
   return {
     intent: raw.intent || 'general_response',
-    response: raw.response || 'I am here to help. How can I assist you?',
+    response,
+    // Falls back to the full response if the model didn't return a separate
+    // summary (e.g. semantic fast-path responses never go through the LLM
+    // at all, so this field never exists there — that's fine, the fast-path
+    // responses are already short).
+    speechSummary: raw.speechSummary || response,
     language: raw.language || fallbackLanguage,
     confidence: typeof raw.confidence === 'number' ? raw.confidence : 0.7,
     action: raw.action || null,

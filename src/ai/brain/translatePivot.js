@@ -25,10 +25,11 @@ export function needsPivot(language) {
  * Run one conversation turn through the English pivot.
  *
  * callNvidiaAI with jsonMode:true returns the structured envelope
- * { intent, response, language, confidence, action, followUp, suggestions }
- * (see conversationManager.js normaliseAIResponse). Only `.response` and
- * `.followUp` are natural-language text needing translation — `.intent` and
- * `.action.path` are keywords/routes, translating those would break routing.
+ * { intent, response, speechSummary, language, confidence, action,
+ * followUp, suggestions } (see conversationManager.js normaliseAIResponse).
+ * `.response`, `.speechSummary`, and `.followUp` are natural-language text
+ * needing translation — `.intent` and `.action.path` are keywords/routes,
+ * translating those would break routing.
  *
  * @param {string} userMessage    - original-language transcript (Assamese)
  * @param {Array}  messages       - full message array as built by promptBuilder.js,
@@ -51,14 +52,18 @@ export async function processWithEnglishPivot(userMessage, messages, sourceLangC
 
   if (!aiResponse?.response) return aiResponse;
 
-  const [translatedResponse, translatedFollowUp] = await Promise.all([
+  const [translatedResponse, translatedSummary, translatedFollowUp] = await Promise.all([
     sarvamTranslate(aiResponse.response, 'en-IN', sourceLangCode),
+    aiResponse.speechSummary
+      ? sarvamTranslate(aiResponse.speechSummary, 'en-IN', sourceLangCode)
+      : Promise.resolve(null),
     aiResponse.followUp ? sarvamTranslate(aiResponse.followUp, 'en-IN', sourceLangCode) : Promise.resolve(null),
   ]);
 
   return {
     ...aiResponse,
     response: translatedResponse,
+    speechSummary: translatedSummary || translatedResponse,
     followUp: translatedFollowUp,
     language: sourceLangCode.split('-')[0],
     pivoted: true,

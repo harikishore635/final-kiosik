@@ -276,6 +276,8 @@ export function VoiceAssistantProvider({ children }) {
       setAiResponse(response);
       console.debug('[VoiceAssistant] AI response', response);
 
+      // Full detail goes in the chat window; speechSummary (short, same
+      // language) is what actually gets spoken — see systemPrompt.js.
       const replyText = response.response || '';
       if (replyText) {
         addMessage('assistant', replyText, { intent: response.intent, action: response.action });
@@ -296,9 +298,10 @@ export function VoiceAssistantProvider({ children }) {
         dispatchAction(response);
       }
 
-      // Speak the reply
+      // Speak the SHORT summary, not the full detail text — the chat window
+      // already shows the full response above.
       const replyLang = response.language || lang;
-      await speakResponse(replyText, replyLang);
+      await speakResponse(response.speechSummary || replyText, replyLang);
 
     } catch (err) {
       console.error('[VoiceAssistant] processMessage error:', err);

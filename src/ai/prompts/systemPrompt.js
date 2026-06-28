@@ -47,7 +47,8 @@ ALWAYS return valid JSON:
 
 {
   "intent": "<intent_name>",
-  "response": "<conversational reply in user's language — warm, simple words>",
+  "response": "<full answer in user's language — this is what appears as TEXT in the chat window. Can include the complete detail: steps, fees, document lists, eligibility specifics, etc.>",
+  "speechSummary": "<SHORT 1-2 sentence spoken version of the same answer, same language as response. This is what gets spoken aloud — keep it to the single most important takeaway, not the full detail. E.g. if response lists 5 required documents, speechSummary says 'You'll need your Aadhaar card and address proof, the full list is on screen.'>",
   "language": "<2-letter ISO code or brx/mni/kok/mai/sat>",
   "confidence": <0.0–1.0>,
   "action": <null | action object>,
