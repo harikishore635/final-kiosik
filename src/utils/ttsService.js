@@ -243,7 +243,22 @@ class TTSService {
         await this.playAudioFromObjectUrl(url, item.options?.volume);
         return;
       } catch (batchErr) {
-        console.warn('[TTS] Batch TTS failed, using Web Speech:', batchErr.message);
+        console.warn('[TTS] Batch TTS failed, trying offline model:', batchErr.message);
+      }
+
+      // 4b. Offline MMS-TTS model (currently Hindi only — see offlineTTS.js).
+      // Covers the gap Browser SpeechSynthesis leaves: that tier depends on
+      // the device having a Hindi voice installed, which isn't guaranteed.
+      try {
+        const { isOfflineTTSSupported, synthesizeOffline } = await import('../ai/voice/offlineTTS.js');
+        if (isOfflineTTSSupported(langInfo.originalLang)) {
+          const url = await synthesizeOffline(item.text, langInfo.originalLang);
+          await this.playAudioFromObjectUrl(url, item.options?.volume);
+          URL.revokeObjectURL(url);
+          return;
+        }
+      } catch (offlineErr) {
+        console.warn('[TTS] Offline model failed, using Web Speech:', offlineErr.message);
       }
 
       // 5. Browser Web Speech (always available, lower quality)
