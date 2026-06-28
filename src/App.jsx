@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { useTranslation } from 'react-i18next';
 import { VoiceAssistantProvider } from './ai/provider/VoiceAssistantProvider';
 import { SessionProvider, useSession } from './context/SessionContext';
@@ -183,6 +184,7 @@ export default function App() {
       <AccessibilityProvider>
         <VoiceAssistantProvider>
           <AIShell>
+            <SpeedInsights />
             <Suspense fallback={<LoadingScreen />}>
               <Routes>
               {/* Public / kiosk entry */}
