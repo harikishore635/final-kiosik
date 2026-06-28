@@ -176,8 +176,10 @@ export default function AadhaarCameraScanner({ onSuccess, onClose }) {
 
       if (code?.data) {
         const raw = code.data;
-        // Accept: XML (<), DEMO: prefix, or 12-digit numeric
-        if (raw.trimStart().startsWith('<') || raw.startsWith('DEMO:') || /^\d{12}$/.test(raw.trim())) {
+        // Accept: XML (<), DEMO: prefix, 12-digit numeric, or v2 Secure QR
+        // (long digit string — most real Aadhaar cards since ~2018). Without
+        // the 50+ digit case this silently dropped every real v2 card scan.
+        if (raw.trimStart().startsWith('<') || raw.startsWith('DEMO:') || /^\d{12}$/.test(raw.trim()) || /^\d{50,}$/.test(raw.trim())) {
           handleQrFound(raw);
           return;
         }

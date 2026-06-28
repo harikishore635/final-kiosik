@@ -119,7 +119,27 @@ function verifyConsentToken(token, sessionId) {
 
 // ── UIDAI QR text parser ──────────────────────────────────────────────────────
 // Handles v1 XML (text QR), DEMO: JSON (test), and plain 12-digit UID.
-function parseUidaiQrText(rawText) {
+// Flask service (flask-aadhaar/app.py) decodes v2 Secure QR — a gzip+protobuf
+// blob encoded as a long base10 digit string (hundreds of digits, NOT to be
+// confused with Format 3 below which is exactly 12 digits — a bare typed UID).
+// Most real Aadhaar cards issued since ~2018 use this v2 format; it was
+// previously unhandled entirely — fell through to "Unrecognised QR format".
+const AADHAAR_DECODER_URL = process.env.AADHAAR_DECODER_URL || 'http://localhost:5001';
+
+async function decodeSecureQrV2(digitString) {
+  const resp = await fetch(`${AADHAAR_DECODER_URL}/decode-secure-qr`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ qrText: digitString }),
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!resp.ok) throw new Error(`Secure QR decoder returned ${resp.status}`);
+  const result = await resp.json();
+  if (!result.success) throw new Error(result.error || 'Secure QR decode failed');
+  return result.data;
+}
+
+async function parseUidaiQrText(rawText) {
   const trimmed = rawText.trimStart();
 
   // Format 1: XML — v1 PrintLetterBarcodeData or v2 OfflinePaperlessKyc
@@ -178,12 +198,31 @@ function parseUidaiQrText(rawText) {
     }
   }
 
-  // Format 3: Plain 12-digit UID (typed/numeric QR)
+  // Format 3: Plain 12-digit UID (typed/numeric QR) — check this BEFORE the
+  // v2 Secure QR check below, since both are pure-digit strings but differ
+  // by length (12 vs hundreds of digits).
   if (/^\d{12}$/.test(trimmed)) {
     return { uid: trimmed, name: '', gender: '', dob: '', district: '', state: '', pincode: '', xmlStr: null, hasSignature: false };
   }
 
-  throw new Error('Unrecognised QR format — expected UIDAI XML, DEMO:, or 12-digit UID');
+  // Format 4: v2 Secure QR — long digit string (gzip+protobuf), real Aadhaar
+  // cards issued since ~2018. Decoded via flask-aadhaar (pyaadhaar).
+  if (/^\d{50,}$/.test(trimmed)) {
+    const decoded = await decodeSecureQrV2(trimmed);
+    return {
+      uid: '', // v2 Secure QR doesn't embed the full UID, only last-4 elsewhere — leave blank, not guessable
+      name: decoded.name || '',
+      gender: decoded.gender || '',
+      dob: decoded.dob || '',
+      district: decoded.address?.district || '',
+      state: decoded.address?.state || '',
+      pincode: decoded.address?.pincode || '',
+      xmlStr: null,
+      hasSignature: false, // v2 Secure QR has its own embedded signature scheme, not the v1 XML <Signature> block
+    };
+  }
+
+  throw new Error('Unrecognised QR format — expected UIDAI XML, DEMO:, 12-digit UID, or v2 Secure QR');
 }
 
 // ── UIDAI RSA-SHA256 signature verification ───────────────────────────────────
@@ -263,7 +302,7 @@ router.post('/aadhaar/validate-mobile', (req, res) => {
 // Two paths:
 //   A) { uid } — legacy/biometric fallback: SQLite lookup, no consent token required
 //   B) { qrText, consentToken, sessionId } — QR scan: parse XML, verify signature, SQLite enrich
-router.post('/aadhaar/verify-qr', (req, res) => {
+router.post('/aadhaar/verify-qr', async (req, res) => {
   const { uid, qrText, consentToken, sessionId } = req.body;
 
   // ── Path A: legacy uid-only (biometric / keypad flow) ───────────────────────
@@ -296,7 +335,7 @@ router.post('/aadhaar/verify-qr', (req, res) => {
 
   let parsed;
   try {
-    parsed = parseUidaiQrText(qrText);
+    parsed = await parseUidaiQrText(qrText);
   } catch (err) {
     console.error('[AUTH] QR parse failed', err);
     return res.status(422).json({ success: false, error: 'QR code could not be read. Please try again.' });
