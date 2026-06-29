@@ -91,9 +91,6 @@ const Gas = () => {
     setFormData(prev => ({ ...prev, ...fields }));
   }, []);
 
-  const STT_LANG_MAP = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', mr: 'mr-IN', gu: 'gu-IN', bn: 'bn-IN', or: 'or-IN', pa: 'pa-IN', as: 'as-IN' };
-  const sttLangCode = STT_LANG_MAP[(i18n.language || 'en').split('-')[0]] || 'hi-IN';
-
   useVoiceFormSubmit('gas', () => { if (step === 2) handleSubmit(); });
 
   const voiceWizard = useVoiceFormWizard({

@@ -86,6 +86,7 @@ export function fillMultipleFields(fields) {
 const VALIDATORS = {
   aadhaar: (v) => /^\d{12}$/.test(v.replace(/\s/g, '')),
   phone:   (v) => /^[6-9]\d{9}$/.test(v.replace(/\D/g, '')),
+  mobile:  (v) => /^[6-9]\d{9}$/.test(v.replace(/\D/g, '')),
   pincode: (v) => /^\d{6}$/.test(v),
   pan:     (v) => /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(v.toUpperCase()),
   email:   (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
@@ -107,6 +108,7 @@ export function validateField(fieldName, value) {
     const errors = {
       aadhaar: 'Aadhaar must be 12 digits.',
       phone:   'Phone must be 10 digits starting with 6-9.',
+      mobile:  'Mobile must be 10 digits starting with 6-9.',
       pincode: 'PIN code must be 6 digits.',
       pan:     'PAN format: AAAAA9999A.',
       email:   'Invalid email address.',
@@ -126,7 +128,7 @@ export function validateField(fieldName, value) {
 export function normaliseFieldValue(fieldName, rawValue) {
   let v = (rawValue || '').trim();
 
-  if (fieldName === 'aadhaar' || fieldName === 'phone' || fieldName === 'pincode') {
+  if (fieldName === 'aadhaar' || fieldName === 'phone' || fieldName === 'mobile' || fieldName === 'pincode') {
     // Convert spoken digits to numerals
     const wordToDigit = {
       'zero':'0','one':'1','two':'2','three':'3','four':'4',
