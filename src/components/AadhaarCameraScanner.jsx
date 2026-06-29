@@ -51,12 +51,25 @@ export default function AadhaarCameraScanner({ onSuccess, onClose }) {
   const scanStartRef = useRef(null);
   const ocrAttemptedRef = useRef(false);
 
-  // Dynamic import jsqr so it doesn't block main bundle
+  // Native BarcodeDetector — OS-level QR decode (Chrome/Edge/Android). Much
+  // stronger than jsQR on dense Aadhaar Secure QR (v2 is a high-version,
+  // 200+ digit code). Initialised once; falls back to jsQR where unsupported.
+  const barcodeDetectorRef = useRef(null);
+
+  // Dynamic import jsqr so it doesn't block main bundle. Also set up the
+  // native BarcodeDetector when the browser provides it.
   useEffect(() => {
+    if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+      try {
+        barcodeDetectorRef.current = new window.BarcodeDetector({ formats: ['qr_code'] });
+      } catch { barcodeDetectorRef.current = null; }
+    }
     import('jsqr').then((mod) => {
       window._jsQR = mod.default || mod;
       setJsqrLoaded(true);
     }).catch(() => {
+      // jsQR failed — still OK if native detector is available
+      if (barcodeDetectorRef.current) { setJsqrLoaded(true); return; }
       setErrorMsg('QR scanner library failed to load.');
       setStatus('error');
     });
@@ -79,7 +92,12 @@ export default function AadhaarCameraScanner({ onSuccess, onClose }) {
     async function start() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+          // 1080p — extra resolution helps the dense Aadhaar Secure QR resolve
+          video: {
+            facingMode: 'environment',
+            width:  { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720 },
+          },
         });
         if (!active) { stream.getTracks().forEach((t) => t.stop()); return; }
         streamRef.current = stream;
@@ -169,20 +187,31 @@ export default function AadhaarCameraScanner({ onSuccess, onClose }) {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const code = window._jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: 'dontInvert',
-      });
 
-      if (code?.data) {
-        const raw = code.data;
-        // Accept: XML (<), DEMO: prefix, 12-digit numeric, or v2 Secure QR
-        // (long digit string — most real Aadhaar cards since ~2018). Without
-        // the 50+ digit case this silently dropped every real v2 card scan.
-        if (raw.trimStart().startsWith('<') || raw.startsWith('DEMO:') || /^\d{12}$/.test(raw.trim()) || /^\d{50,}$/.test(raw.trim())) {
-          handleQrFound(raw);
-          return;
-        }
+      // Accept: XML (<), DEMO: prefix, 12-digit numeric, or v2 Secure QR
+      // (long digit string — most real Aadhaar cards since ~2018).
+      const isAadhaarQr = (raw) =>
+        raw && (raw.trimStart().startsWith('<') || raw.startsWith('DEMO:') ||
+                /^\d{12}$/.test(raw.trim()) || /^\d{50,}$/.test(raw.trim()));
+
+      // 1. Native BarcodeDetector first — best on dense Aadhaar Secure QR.
+      const detector = barcodeDetectorRef.current;
+      if (detector) {
+        try {
+          const codes = await detector.detect(canvas);
+          for (const c of codes) {
+            if (isAadhaarQr(c.rawValue)) { handleQrFound(c.rawValue); return; }
+          }
+        } catch { /* detector hiccup — fall through to jsQR */ }
+      }
+
+      // 2. jsQR fallback (covers browsers without BarcodeDetector).
+      if (window._jsQR) {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = window._jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: 'attemptBoth',
+        });
+        if (isAadhaarQr(code?.data)) { handleQrFound(code.data); return; }
       }
 
       // After 15 seconds without QR — try NVIDIA Vision OCR
