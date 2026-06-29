@@ -35,6 +35,7 @@ const QRUpload = ({
   const urlInputRef = useRef(null);
   const [previewFile, setPreviewFile] = useState(null);
   const [finalizeProgress, setFinalizeProgress] = useState(0);
+  const onUploadCompleteRef = useRef(onUploadComplete);
 
   const sessionId = sessionInfo?.sessionId;
   const uploadUrl = sessionInfo?.uploadUrl;
@@ -44,6 +45,7 @@ const QRUpload = ({
     setShowQR(true);
     setUploadStatus('waiting');
     setErrorMessage('');
+    setFinalizeProgress(0);
 
     const sid = uploadId || `UP-${Date.now().toString(36).toUpperCase()}`;
     const pin = String(Math.floor(100000 + Math.random() * 900000));
@@ -56,6 +58,7 @@ const QRUpload = ({
   const handleRegenerate = () => {
     setSessionInfo(null);
     setUploadStatus('waiting');
+    setFinalizeProgress(0);
     handleShowQR();
   };
 
@@ -111,6 +114,10 @@ const QRUpload = ({
   };
 
   useEffect(() => {
+    onUploadCompleteRef.current = onUploadComplete;
+  }, [onUploadComplete]);
+
+  useEffect(() => {
     if (!showQR || uploadStatus !== 'waiting' || !sessionId) return undefined;
     if (!supabase) {
       setErrorMessage('Supabase not configured — uploads unavailable.');
@@ -118,7 +125,9 @@ const QRUpload = ({
     }
 
     let isActive = true;
+    let isFinalizing = false;
     const poll = async () => {
+      if (isFinalizing) return;
       try {
         const { data: storageFiles, error } = await supabase.storage
           .from('uploads')
@@ -135,6 +144,9 @@ const QRUpload = ({
             url: `${sessionId}/${f.name}`,
             publicUrl: supabase.storage.from('uploads').getPublicUrl(`${sessionId}/${f.name}`).data.publicUrl,
           }));
+          isFinalizing = true;
+          clearInterval(interval);
+          setFinalizeProgress(0);
           setUploadStatus('finalizing');
           const steps = 12;
           for (let i = 1; i <= steps; i++) {
@@ -145,7 +157,7 @@ const QRUpload = ({
           }
           setUploadedFiles(files);
           setUploadStatus('complete');
-          if (onUploadComplete) onUploadComplete(files);
+          if (onUploadCompleteRef.current) onUploadCompleteRef.current(files);
         }
       } catch {
         if (isActive) setErrorMessage('Waiting for upload...');
@@ -159,7 +171,7 @@ const QRUpload = ({
       isActive = false;
       clearInterval(interval);
     };
-  }, [showQR, uploadStatus, sessionId, onUploadComplete]);
+  }, [showQR, sessionId]);
 
   const formattedPin = useMemo(() => {
     if (!kioskPin) return '';
