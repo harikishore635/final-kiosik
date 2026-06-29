@@ -12,22 +12,9 @@ const REQUIRES_CONFIRMATION = new Set([
   'SUBMIT_FORM', 'PAY_BILL', 'DELETE_DATA', 'ADMIN_ACTION',
 ]);
 
-export const INTENT_TO_PATH = {
-  navigate_electricity:    '/electricity-menu',
-  navigate_gas:            '/gas-menu',
-  navigate_water:          '/water',
-  navigate_sanitation:     '/sanitation',
-  navigate_municipal:      '/municipal-menu',
-  navigate_transport:      '/transport',
-  navigate_healthcare:     '/healthcare',
-  navigate_complaints:     '/complaints',
-  navigate_schemes:        '/schemes',
-  navigate_track:          '/track-status',
-  navigate_home:           '/home',
-  navigate_login:          '/login',
-  navigate_office_locator: '/office-locator',
-  navigate_dashboard:      '/dashboard',
-};
+// Single source of truth lives in navigationRegistry.js. Re-exported here so
+// existing importers keep working.
+export { INTENT_TO_PATH } from './navigationRegistry.js';
 
 /**
  * Route an AI response to an executable action.

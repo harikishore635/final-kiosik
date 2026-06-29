@@ -15,7 +15,7 @@ import {
 } from './contextMemory.js';
 import { detectLanguage, setLanguagePreference } from './multilingualProcessor.js';
 import { semanticMatch, prewarmSemanticMatcher } from './semanticIntentMatcher.js';
-import { INTENT_TO_PATH } from './intentRouter.js';
+import { INTENT_TO_PATH, NAV_RESPONSES, resolveContextAction } from './navigationRegistry.js';
 import { needsPivot, processWithEnglishPivot } from './translatePivot.js';
 import SERVICE_KNOWLEDGE from '../prompts/serviceKnowledge.js';
 
@@ -102,13 +102,45 @@ export async function processConversationTurn(userMessage, options = {}) {
   const language = inputLang || langInfo.primary;
   setLanguagePreference(language);
 
+  // Raw STT transcript — first thing to check when a voice command misses.
+  // If this text is wrong, the problem is STT, not intent matching.
+  console.log(`[STT→Turn] transcript="${userMessage}" lang=${language} (detected=${langInfo.primary}, mixed=${langInfo.isMixed})`);
+
   addMessage('user', userMessage, { language, detectedMixed: langInfo.isMixed });
   updateContext({ language, detectedLanguage: langInfo.primary });
+
+  // ── Context fast-path: page-relative generic actions ──
+  // "new connection" / "pay bill" / "complaint" resolve against the current page
+  // (e.g. on /gas → gas connection). Runs before the semantic matcher so bare
+  // action words bind to the page the user is actually on. Defers when the user
+  // explicitly names a different service (handled by the semantic matcher).
+  const ctxAction = resolveContextAction(userMessage, currentPath);
+  if (ctxAction) {
+    const { intent, path, response, confidence } = ctxAction;
+    console.log(`[ConversationManager] Context fast-path: ${intent} → ${path} (page=${currentPath})`);
+    const fastResponse = {
+      intent,
+      response,
+      speechSummary: response,
+      language,
+      confidence,
+      action: path ? { type: 'NAVIGATE_PAGE', path } : null,
+      followUp: null,
+      suggestions: [],
+      offline: false,
+      source: 'context',
+    };
+    addMessage('assistant', response, { intent, language });
+    return fastResponse;
+  }
 
   // ── Semantic fast-path: try MiniLLM intent classification before LLM call ──
   // For simple navigation queries, this avoids a full cloud LLM round-trip.
   // Threshold 0.55 = high confidence only; ambiguous queries fall through to LLM.
   const semanticResult = await semanticMatch(userMessage, 0.55);
+  if (!semanticResult) {
+    console.log(`[STT→Turn] no semantic match for "${userMessage}" → falling through to LLM`);
+  }
   if (semanticResult) {
     const { intent, confidence } = semanticResult;
     const path = INTENT_TO_PATH[intent];
@@ -234,20 +266,8 @@ export function generateGreeting(language = 'en') {
   return "Hello! I'm SUVIDHA, your assistant for government services. How can I help you today?";
 }
 
-// Short response for semantic fast-path navigations (no LLM needed)
-const NAV_RESPONSES = {
-  navigate_electricity:    'Taking you to Electricity services.',
-  navigate_gas:            'Taking you to Gas services.',
-  navigate_water:          'Taking you to Water services.',
-  navigate_municipal:      'Taking you to Municipal services.',
-  navigate_complaints:     'Opening Complaint Registration.',
-  navigate_track:          'Opening Request Tracking.',
-  navigate_home:           'Returning to Home.',
-  navigate_schemes:        'Opening Government Schemes.',
-  navigate_login:          'Taking you to Login.',
-  navigate_office_locator: 'Opening Office Locator.',
-};
-
+// Short response for semantic fast-path navigations (no LLM needed).
+// NAV_RESPONSES is derived from navigationRegistry.js (single source of truth).
 function buildNavigationResponse(intent) {
   return NAV_RESPONSES[intent] || 'Navigating...';
 }

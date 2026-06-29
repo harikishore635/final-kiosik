@@ -19,53 +19,9 @@ import { pipeline, env } from '@huggingface/transformers';
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
-// ── Intent definitions ────────────────────────────────────────────────────────
+// Intent examples are derived from the navigation registry (single source of truth).
+import { INTENT_EXAMPLES } from './navigationRegistry.js';
 
-const INTENT_EXAMPLES = {
-  navigate_electricity: [
-    'electricity', 'power', 'light', 'meter', 'bijli', 'current supply',
-    'new electricity connection', 'बिजली', 'மின்சாரம்', 'కరెంట్',
-    'load extension', 'electricity bill', 'meter replacement',
-  ],
-  navigate_gas: [
-    'gas', 'gas connection', 'gas bill', 'cylinder', 'piped gas',
-    'gas complaint', 'গ্যাস', 'गैस', 'வாயு', 'gas meter',
-  ],
-  navigate_water: [
-    'water', 'water supply', 'water connection', 'pipe leak', 'tap water',
-    'pani', 'জল', 'पानी', 'தண்ணீர்', 'water disruption',
-  ],
-  navigate_municipal: [
-    'municipal', 'municipality', 'panchayat', 'ward', 'nagar palika',
-    'property tax', 'garbage', 'street light', 'road damage', 'sewage',
-    'nagarpalika', 'நகர்மன்றம்', 'नगरपालिका',
-  ],
-  navigate_complaints: [
-    'complaint', 'grievance', 'problem', 'issue', 'register complaint',
-    'shikayat', 'शिकायत', 'புகார்', 'অভিযোগ', 'report problem',
-  ],
-  navigate_track: [
-    'track', 'track status', 'check status', 'application status',
-    'ticket status', 'request status', 'स्थिति', 'status check',
-    'where is my application', 'how long', 'pending request',
-  ],
-  navigate_home: [
-    'home', 'main menu', 'go back', 'start over', 'mukhya menu',
-    'मुख्य मेनू', 'முகப்பு', 'restart', 'home page',
-  ],
-  navigate_schemes: [
-    'scheme', 'government scheme', 'yojana', 'benefit', 'subsidy',
-    'योजना', 'திட்டம்', 'সরকারি প্রকল্প', 'welfare', 'eligibility',
-  ],
-  navigate_login: [
-    'login', 'sign in', 'enter', 'start', 'log in', 'लॉगिन',
-    'consumer id', 'account number', 'authenticate', 'enter details',
-  ],
-  navigate_office_locator: [
-    'office', 'nearby office', 'where is office', 'location', 'address',
-    'karyalay', 'कार्यालय', 'அலுவலகம்', 'find office', 'direction',
-  ],
-};
 
 // ── Model state ───────────────────────────────────────────────────────────────
 
@@ -104,13 +60,11 @@ async function buildIntentEmbeddings() {
   const entries = Object.entries(INTENT_EXAMPLES);
   const result = {};
   for (const [intent, examples] of entries) {
-    const vecs = await Promise.all(examples.map(embed));
-    // Average all example embeddings into one representative vector
-    const dim = vecs[0].length;
-    const avg = new Array(dim).fill(0);
-    for (const v of vecs) v.forEach((val, i) => { avg[i] += val; });
-    avg.forEach((_, i) => { avg[i] /= vecs.length; });
-    result[intent] = avg;
+    // Keep every example vector separately. Averaging mixed-language examples
+    // (English + Hindi + Tamil + Telugu) into one centroid blurs the vector and
+    // sinks single-language queries like "go to electricity" below threshold.
+    // Match against each example and take the best (max) similarity instead.
+    result[intent] = await Promise.all(examples.map(embed));
   }
   _intentEmbeddings = result;
 }
@@ -147,9 +101,14 @@ export async function semanticMatch(utterance, threshold = 0.52) {
     const uttVec = await embed(utterance);
     let bestIntent = null;
     let bestScore  = -1;
-    for (const [intent, vec] of Object.entries(_intentEmbeddings)) {
-      const score = cosine(uttVec, vec);
-      if (score > bestScore) { bestScore = score; bestIntent = intent; }
+    for (const [intent, vecs] of Object.entries(_intentEmbeddings)) {
+      // Max similarity across this intent's examples (best-match, not centroid)
+      let intentScore = -1;
+      for (const vec of vecs) {
+        const score = cosine(uttVec, vec);
+        if (score > intentScore) intentScore = score;
+      }
+      if (intentScore > bestScore) { bestScore = intentScore; bestIntent = intent; }
     }
     if (bestScore >= threshold) {
       console.debug(`[SemanticMatcher] "${utterance}" → ${bestIntent} (${bestScore.toFixed(3)})`);
