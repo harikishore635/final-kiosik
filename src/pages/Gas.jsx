@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useVoiceFormWizard } from '../hooks/useVoiceFormWizard';
+import { useVoiceFormSubmit } from '../hooks/useVoiceFormSubmit';
 import { Modal, Select, ApplicantBanner } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
+import AadhaarScanPrefillButton from '../components/AadhaarScanPrefillButton';
 import { states, cities, wards, serviceCategories } from '../utils/constants';
 import { generateRequestId, getCurrentTimestamp } from '../utils/helpers';
 import { addReceipt } from '../utils/receipts';
@@ -83,6 +86,28 @@ const Gas = () => {
       setFormData(prev => ({ ...prev, ward: '' }));
     }
   };
+
+  const handleAadhaarFields = useCallback((fields) => {
+    setFormData(prev => ({ ...prev, ...fields }));
+  }, []);
+
+  const STT_LANG_MAP = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', mr: 'mr-IN', gu: 'gu-IN', bn: 'bn-IN', or: 'or-IN', pa: 'pa-IN', as: 'as-IN' };
+  const sttLangCode = STT_LANG_MAP[(i18n.language || 'en').split('-')[0]] || 'hi-IN';
+
+  useVoiceFormSubmit('gas', () => { if (step === 2) handleSubmit(); });
+
+  const voiceWizard = useVoiceFormWizard({
+    fields: [
+      { name: 'name',        optional: false },
+      { name: 'mobile',      optional: false },
+      { name: 'state',       optional: false },
+      { name: 'city',        optional: false },
+      { name: 'ward',        optional: false },
+      { name: 'address',     optional: false },
+      { name: 'description', optional: false },
+    ],
+    language: i18n.language,
+  });
 
   const validateForm = () => {
     const newErrors = {};
@@ -246,9 +271,18 @@ const Gas = () => {
         ) : (
           <div className="card">
             <ApplicantBanner />
-            <span className="badge b-info" style={{ marginBottom: 44 }}>
-              Selected · {t(`gas.${selectedCategory}`)}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 44 }}>
+              <span className="badge b-info">
+                Selected · {t(`gas.${selectedCategory}`)}
+              </span>
+              <button
+                type="button"
+                onClick={() => (voiceWizard.isActive ? voiceWizard.stop() : voiceWizard.start())}
+                className={`chip${voiceWizard.isActive ? ' act' : ''}`}
+              >
+                {voiceWizard.isActive ? `Listening: ${voiceWizard.currentField || '...'}` : t('form.voiceFill', 'Fill by Voice')}
+              </button>
+            </div>
 
             {/* Meter Damage — severity + type */}
             {selectedCategory === 'meterDamage' && (
@@ -288,15 +322,17 @@ const Gas = () => {
               </div>
             )}
 
+            <AadhaarScanPrefillButton onFields={handleAadhaarFields} />
+
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '36px 40px' }}>
               <div>
                 <label className="flab">{t('form.name')} *</label>
-                <input className="field" value={formData.name} onChange={(e) => handleInputChange('name', e.target.value)} placeholder={t('form.enterName')} required />
+                <input className="field" data-voice-field="name" value={formData.name} onChange={(e) => handleInputChange('name', e.target.value)} placeholder={t('form.enterName')} required />
                 {errors.name && <div className="meta" style={{ color: 'var(--err)' }}>{errors.name}</div>}
               </div>
               <div>
                 <label className="flab">{t('form.mobile')} *</label>
-                <input className="field" type="tel" value={formData.mobile} onChange={(e) => handleInputChange('mobile', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder={t('form.enterMobile')} required />
+                <input className="field" data-voice-field="mobile" type="tel" value={formData.mobile} onChange={(e) => handleInputChange('mobile', e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder={t('form.enterMobile')} required />
                 {errors.mobile && <div className="meta" style={{ color: 'var(--err)' }}>{errors.mobile}</div>}
               </div>
             </div>
@@ -321,6 +357,7 @@ const Gas = () => {
                   onChange={(e) => handleInputChange('state', e.target.value)}
                   placeholder={t('form.selectState')}
                   options={states.map(s => ({ value: s.id, label: getLocalizedName(s) }))}
+                  voiceField="state"
                   required
                 />
                 {errors.state && <div className="meta" style={{ color: 'var(--err)' }}>{errors.state}</div>}
@@ -333,6 +370,7 @@ const Gas = () => {
                   placeholder={t('form.selectCity')}
                   options={availableCities.map(c => ({ value: c.id, label: getLocalizedName(c) }))}
                   disabled={!formData.state}
+                  voiceField="city"
                   required
                 />
                 {errors.city && <div className="meta" style={{ color: 'var(--err)' }}>{errors.city}</div>}
@@ -345,6 +383,7 @@ const Gas = () => {
                   placeholder={t('form.selectWard')}
                   options={availableWards.map(w => ({ value: w.id, label: w.name }))}
                   disabled={!formData.city}
+                  voiceField="ward"
                   required
                 />
                 {errors.ward && <div className="meta" style={{ color: 'var(--err)' }}>{errors.ward}</div>}
@@ -353,13 +392,13 @@ const Gas = () => {
 
             <div style={{ marginTop: 36 }}>
               <label className="flab">{t('form.address')} *</label>
-              <input className="field" value={formData.address} onChange={(e) => handleInputChange('address', e.target.value)} placeholder={t('form.enterAddress')} required />
+              <input className="field" data-voice-field="address" value={formData.address} onChange={(e) => handleInputChange('address', e.target.value)} placeholder={t('form.enterAddress')} required />
               {errors.address && <div className="meta" style={{ color: 'var(--err)' }}>{errors.address}</div>}
             </div>
 
             <div style={{ marginTop: 36 }}>
               <label className="flab">{t('form.description')} *</label>
-              <textarea className="field" style={{ minHeight: 240 }} value={formData.description} onChange={(e) => handleInputChange('description', e.target.value)} placeholder={t('form.enterDescription')} required maxLength={500} />
+              <textarea className="field" data-voice-field="description" style={{ minHeight: 240 }} value={formData.description} onChange={(e) => handleInputChange('description', e.target.value)} placeholder={t('form.enterDescription')} required maxLength={500} />
               {errors.description && <div className="meta" style={{ color: 'var(--err)' }}>{errors.description}</div>}
             </div>
 

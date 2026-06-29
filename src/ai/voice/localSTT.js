@@ -1,13 +1,12 @@
 /**
- * localSTT.js — Offline Whisper STT via transformers.js
+ * localSTT.js — Offline Whisper STT via transformers.js (offline fallback only)
  *
- * Model tiers (all quantized int8, cached in browser IndexedDB forever):
- *   whisper-small.en      ~40 MB  — English-only, fastest + most accurate for EN
- *   whisper-large-v3-turbo ~500 MB — Best for low-resource langs (Assamese)
- *   whisper-medium        ~240 MB  — All major Indian languages
- *   whisper-small         ~67 MB   — Bridge/Devanagari-fallback languages
+ * Models (quantized int8, cached in browser IndexedDB):
+ *   whisper-small.en  ~40 MB  — English
+ *   whisper-small     ~67 MB  — All Indic langs (navigation keywords only)
  *
- * First load downloads model; subsequent loads serve from IndexedDB cache.
+ * Sarvam STT is primary (online). Whisper fires only when Sarvam is unreachable.
+ * Aadhaar QR fills form fields; Whisper only needs to recognise nav commands.
  */
 
 import { pipeline, env } from '@huggingface/transformers';
@@ -17,42 +16,29 @@ env.allowLocalModels = false;
 env.useBrowserCache = true;
 
 // ── Model IDs ────────────────────────────────────────────────────────────────
-const MODEL_EN_ONLY     = 'Xenova/whisper-small.en';       // English-only, ~40MB
-const MODEL_LARGE_TURBO = 'Xenova/whisper-large-v3-turbo'; // Best for low-resource (as), ~500MB
-const MODEL_MEDIUM      = 'Xenova/whisper-medium';          // Major Indic langs, ~240MB
-const MODEL_SMALL       = 'Xenova/whisper-small';           // Bridge/fallback langs, ~67MB
+// Aadhaar QR scan fills all form fields → Whisper only needs to handle
+// navigation commands ("electricity", "water", "back") + chatbot queries.
+// Sarvam STT is primary (online). Whisper is offline fallback only.
+// Navigation words are short/known vocab → small model is sufficient for all langs.
+const MODEL_EN_ONLY = 'Xenova/whisper-small.en'; // English — 40MB, fastest
+const MODEL_SMALL   = 'Xenova/whisper-small';    // All Indic langs — 67MB
 
 // ── Language → model assignment ───────────────────────────────────────────────
-// Priority order: as > hi > en > major Indic > bridge
+// Single-tier: small model for everyone.
+// Rationale: Sarvam handles complex sentences online. Whisper offline fallback
+// only needs to recognise ~20 navigation keywords per language — small is enough.
+// Saves 200-450MB browser RAM vs previous medium/large-turbo assignments.
 const LANG_MODEL_MAP = {
-  // High-priority: best models for top 3 languages
-  en:  MODEL_EN_ONLY,       // English-only model — fastest, most accurate for English
-  as:  MODEL_LARGE_TURBO,   // Assamese is low-resource — needs large model for accuracy
-  hi:  MODEL_MEDIUM,        // Hindi — well covered by medium
-
-  // Major Indian languages — all get medium model
-  bn:  MODEL_MEDIUM,        // Bengali
-  ta:  MODEL_MEDIUM,        // Tamil
-  te:  MODEL_MEDIUM,        // Telugu
-  kn:  MODEL_MEDIUM,        // Kannada
-  ml:  MODEL_MEDIUM,        // Malayalam
-  mr:  MODEL_MEDIUM,        // Marathi
-  gu:  MODEL_MEDIUM,        // Gujarati
-  pa:  MODEL_MEDIUM,        // Punjabi
-  or:  MODEL_MEDIUM,        // Odia
-
-  // Bridge langs (not in Whisper's 100-language set — transcribed via closest script)
-  ur:  MODEL_SMALL,         // Urdu → Arabic script, close to Urdu Whisper token
-  ne:  MODEL_SMALL,         // Nepali → Devanagari
-  sd:  MODEL_SMALL,         // Sindhi
-  mai: MODEL_SMALL,         // Maithili → Devanagari, Hindi bridge
-  kok: MODEL_SMALL,         // Konkani → Devanagari
-  doi: MODEL_SMALL,         // Dogri → Devanagari
-  sa:  MODEL_SMALL,         // Sanskrit → Devanagari
-  brx: MODEL_SMALL,         // Bodo → Devanagari
-  ks:  MODEL_SMALL,         // Kashmiri → Perso-Arabic (Urdu bridge)
-  mni: MODEL_SMALL,         // Manipuri → Bengali script bridge
-  sat: MODEL_SMALL,         // Santali → Bengali script bridge
+  en:  MODEL_EN_ONLY, // English-only model slightly better for EN commands
+  // All other languages: small multilingual (67MB, cached once)
+  as:  MODEL_SMALL, hi:  MODEL_SMALL, bn:  MODEL_SMALL,
+  ta:  MODEL_SMALL, te:  MODEL_SMALL, kn:  MODEL_SMALL,
+  ml:  MODEL_SMALL, mr:  MODEL_SMALL, gu:  MODEL_SMALL,
+  pa:  MODEL_SMALL, or:  MODEL_SMALL, ur:  MODEL_SMALL,
+  ne:  MODEL_SMALL, sd:  MODEL_SMALL, mai: MODEL_SMALL,
+  kok: MODEL_SMALL, doi: MODEL_SMALL, sa:  MODEL_SMALL,
+  brx: MODEL_SMALL, ks:  MODEL_SMALL, mni: MODEL_SMALL,
+  sat: MODEL_SMALL,
 };
 
 // Whisper uses full English language names, not ISO codes

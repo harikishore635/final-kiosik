@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useVoiceFormWizard } from '../hooks/useVoiceFormWizard';
+import { useVoiceFormSubmit } from '../hooks/useVoiceFormSubmit';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, ArrowLeft, Droplets, Search, FileText, UserCog } from 'lucide-react';
@@ -19,6 +21,7 @@ import {
 import { VK } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
+import AadhaarScanPrefillButton from '../components/AadhaarScanPrefillButton';
 import { states, cities, wards, serviceCategories } from '../utils/constants';
 import { generateRequestId, getCurrentTimestamp } from '../utils/helpers';
 import { addReceipt } from '../utils/receipts';
@@ -108,6 +111,28 @@ const Water = () => {
       setFormData(prev => ({ ...prev, ward: '' }));
     }
   };
+
+  const handleAadhaarFields = useCallback((fields) => {
+    setFormData(prev => ({ ...prev, ...fields }));
+  }, []);
+
+  const STT_LANG_MAP = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', mr: 'mr-IN', gu: 'gu-IN', bn: 'bn-IN', or: 'or-IN', pa: 'pa-IN', as: 'as-IN' };
+  const sttLangCode = STT_LANG_MAP[(i18n.language || 'en').split('-')[0]] || 'hi-IN';
+
+  useVoiceFormSubmit('water', () => { if (step === 2) handleSubmit(); });
+
+  const voiceWizard = useVoiceFormWizard({
+    fields: [
+      { name: 'name',        optional: false },
+      { name: 'mobile',      optional: false },
+      { name: 'state',       optional: false },
+      { name: 'city',        optional: false },
+      { name: 'ward',        optional: true  },
+      { name: 'address',     optional: false },
+      { name: 'description', optional: false },
+    ],
+    language: i18n.language,
+  });
 
   const validateForm = () => {
     const newErrors = {};
@@ -291,13 +316,23 @@ const Water = () => {
         ) : (
           <div className="bg-white rounded-kiosk-lg shadow-kiosk p-6 md:p-8">
             <ApplicantBanner />
-            <div className="mb-6 p-4 bg-blue-50 rounded-kiosk border border-blue-200">
-              <p className="text-kiosk-base font-semibold text-blue-800">
-                Selected: {t(`water.${selectedCategory}`)}
-              </p>
+            <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+              <div className="p-4 bg-blue-50 rounded-kiosk border border-blue-200 flex-1">
+                <p className="text-kiosk-base font-semibold text-blue-800">
+                  Selected: {t(`water.${selectedCategory}`)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => (voiceWizard.isActive ? voiceWizard.stop() : voiceWizard.start())}
+                className={`chip${voiceWizard.isActive ? ' act' : ''}`}
+              >
+                {voiceWizard.isActive ? `Listening: ${voiceWizard.currentField || '...'}` : t('form.voiceFill', 'Fill by Voice')}
+              </button>
             </div>
 
             <div className="space-y-6">
+              <AadhaarScanPrefillButton onFields={handleAadhaarFields} />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input
                   label={t('form.name')}
@@ -305,6 +340,7 @@ const Water = () => {
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   placeholder={t('form.enterName')}
                   error={errors.name}
+                  voiceField="name"
                   required
                 />
                 <Input
@@ -314,6 +350,7 @@ const Water = () => {
                   onChange={(e) => handleInputChange('mobile', e.target.value.replace(/\D/g, '').slice(0, 10))}
                   placeholder={t('form.enterMobile')}
                   error={errors.mobile}
+                  voiceField="mobile"
                   required
                 />
               </div>
@@ -342,6 +379,7 @@ const Water = () => {
                   placeholder={t('form.selectState')}
                   options={states.map(s => ({ value: s.id, label: getLocalizedName(s) }))}
                   error={errors.state}
+                  voiceField="state"
                   required
                 />
                 <Select
@@ -351,6 +389,7 @@ const Water = () => {
                   placeholder={t('form.selectCity')}
                   options={availableCities.map(c => ({ value: c.id, label: getLocalizedName(c) }))}
                   error={errors.city}
+                  voiceField="city"
                   required
                   disabled={!formData.state}
                 />
@@ -361,6 +400,7 @@ const Water = () => {
                   placeholder={t('form.selectWard')}
                   options={availableWards.map(w => ({ value: w.id, label: w.name }))}
                   error={errors.ward}
+                  voiceField="ward"
                   required
                   disabled={!formData.city}
                 />
@@ -372,6 +412,7 @@ const Water = () => {
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 placeholder={t('form.enterAddress')}
                 error={errors.address}
+                voiceField="address"
                 required
               />
 
@@ -381,6 +422,7 @@ const Water = () => {
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 placeholder={t('form.enterDescription')}
                 error={errors.description}
+                voiceField="description"
                 required
                 rows={4}
                 maxLength={500}

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Camera, Upload, MapPin, AlertTriangle, Lightbulb, Droplet, Shield, Wind, Construction, HelpCircle } from 'lucide-react';
@@ -19,6 +19,7 @@ import { complaintAPI } from '../utils/apiService';
 import { addReceipt } from '../utils/receipts';
 import { sleep } from '../utils/mockDelay';
 import { getActiveApplicant, buildFormPrefill, clearActiveApplicant } from '../utils/citizenProfile';
+import AadhaarScanPrefillButton from '../components/AadhaarScanPrefillButton';
 
 /**
  * Complaints Registration page
@@ -130,6 +131,10 @@ const Complaints = () => {
       setNotice(t('complaints.geoUnsupported'));
     }
   };
+
+  const handleAadhaarFields = useCallback((fields) => {
+    setFormData(prev => ({ ...prev, ...fields }));
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -314,6 +319,7 @@ const Complaints = () => {
             </div>
 
             <div className="space-y-6">
+              <AadhaarScanPrefillButton onFields={handleAadhaarFields} />
               {/* Personal Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input

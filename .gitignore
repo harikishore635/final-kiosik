@@ -48,3 +48,4 @@ server/suvidha.db-wal
 server/uploads/
 
 .vercel
+.env*

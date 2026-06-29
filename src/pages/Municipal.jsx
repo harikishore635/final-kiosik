@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Modal, Select, ApplicantBanner } from '../components';
 import { VK, DD, I, ic } from '../components/kiosk';
 import { LoadingScreen, SubmissionSteps } from '../components/loading';
 import QRUpload from '../components/QRUpload';
+import AadhaarScanPrefillButton from '../components/AadhaarScanPrefillButton';
 import { states, cities, wards, serviceCategories } from '../utils/constants';
 import { generateRequestId, getCurrentTimestamp } from '../utils/helpers';
 import { addReceipt } from '../utils/receipts';
@@ -109,6 +110,10 @@ const Municipal = () => {
       setFormData(prev => ({ ...prev, ward: '' }));
     }
   };
+
+  const handleAadhaarFields = useCallback((fields) => {
+    setFormData(prev => ({ ...prev, ...fields }));
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -340,6 +345,8 @@ const Municipal = () => {
                 </div>
               </div>
             )}
+
+            <AadhaarScanPrefillButton onFields={handleAadhaarFields} />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '36px 40px' }}>
               <div>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useVoiceFormWizard } from '../hooks/useVoiceFormWizard';
+import { useVoiceFormSubmit } from '../hooks/useVoiceFormSubmit';
 import { ArrowRight, ArrowLeft } from 'lucide-react';
 import {
   Header,
@@ -76,6 +78,24 @@ const Electricity = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const categories = serviceCategories.electricity;
+
+  const STT_LANG_MAP = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', mr: 'mr-IN', gu: 'gu-IN', bn: 'bn-IN', or: 'or-IN', pa: 'pa-IN', as: 'as-IN' };
+  const sttLangCode = STT_LANG_MAP[(i18n.language || 'en').split('-')[0]] || 'hi-IN';
+
+  useVoiceFormSubmit('electricity', () => { if (step === 2) handleSubmit(); });
+
+  const voiceWizard = useVoiceFormWizard({
+    fields: [
+      { name: 'name',        optional: false },
+      { name: 'mobile',      optional: false },
+      { name: 'state',       optional: false },
+      { name: 'city',        optional: false },
+      { name: 'ward',        optional: true  },
+      { name: 'address',     optional: false },
+      { name: 'description', optional: false },
+    ],
+    language: i18n.language,
+  });
 
   const getLocalizedName = (item) => {
     if (i18n.language === 'hi' && item.nameHi) return item.nameHi;
@@ -281,10 +301,22 @@ const Electricity = () => {
           /* Step 2: Request Form */
           <div className="bg-white rounded-kiosk-lg shadow-kiosk p-6 md:p-8">
             <ApplicantBanner />
-            <div className="mb-6 p-4 bg-yellow-50 rounded-kiosk border border-yellow-200">
-              <p className="text-kiosk-base font-semibold text-yellow-800">
-                Selected: {t(`electricity.${selectedCategory}`)}
-              </p>
+            <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+              <div className="p-4 bg-yellow-50 rounded-kiosk border border-yellow-200 flex-1">
+                <p className="text-kiosk-base font-semibold text-yellow-800">
+                  Selected: {t(`electricity.${selectedCategory}`)}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => (voiceWizard.isActive ? voiceWizard.stop() : voiceWizard.start())}
+                className={`chip${voiceWizard.isActive ? ' act' : ''}`}
+                aria-label={voiceWizard.isActive ? 'Stop voice fill' : 'Fill form by voice'}
+              >
+                {voiceWizard.isActive
+                  ? `Listening: ${voiceWizard.currentField || '...'}`
+                  : t('form.voiceFill', 'Fill by Voice')}
+              </button>
             </div>
 
             <div className="space-y-6">
@@ -295,6 +327,7 @@ const Electricity = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input
                   label={t('form.name')}
+                  voiceField="name"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   placeholder={t('form.enterName')}
@@ -303,6 +336,7 @@ const Electricity = () => {
                 />
                 <Input
                   label={t('form.mobile')}
+                  voiceField="mobile"
                   type="tel"
                   value={formData.mobile}
                   onChange={(e) => handleInputChange('mobile', e.target.value.replace(/\D/g, '').slice(0, 10))}
@@ -430,6 +464,7 @@ const Electricity = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Select
                   label={t('form.state')}
+                  voiceField="state"
                   value={formData.state}
                   onChange={(e) => handleInputChange('state', e.target.value)}
                   placeholder={t('form.selectState')}
@@ -439,6 +474,7 @@ const Electricity = () => {
                 />
                 <Select
                   label={t('form.city')}
+                  voiceField="city"
                   value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
                   placeholder={t('form.selectCity')}
@@ -449,6 +485,7 @@ const Electricity = () => {
                 />
                 <Select
                   label={t('form.ward')}
+                  voiceField="ward"
                   value={formData.ward}
                   onChange={(e) => handleInputChange('ward', e.target.value)}
                   placeholder={t('form.selectWard')}
@@ -461,6 +498,7 @@ const Electricity = () => {
 
               <Input
                 label={t('form.address')}
+                voiceField="address"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
                 placeholder={t('form.enterAddress')}
@@ -470,6 +508,7 @@ const Electricity = () => {
 
               <TextArea
                 label={t('form.description')}
+                voiceField="description"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 placeholder={t('form.enterDescription')}

@@ -12,6 +12,33 @@ import { Router } from 'express';
 
 const router = Router();
 
+// ── Assamese translate-pivot helper ──────────────────────────────────────────
+// Open-source LLMs reason poorly in Assamese directly.
+// Pivot: user Assamese → English for LLM → Assamese for reply.
+async function sarvamTranslate(text, srcLang, tgtLang) {
+  const key = process.env.SARVAM_API_KEY;
+  if (!key || !text?.trim()) return null;
+  try {
+    const res = await fetch('https://api.sarvam.ai/translate', {
+      method: 'POST',
+      headers: { 'api-subscription-key': key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        input: text,
+        source_language_code: srcLang,
+        target_language_code: tgtLang,
+        model: 'mayura:v1',
+        mode: 'formal',
+      }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data?.translated_text?.trim() || null;
+  } catch {
+    return null;
+  }
+}
+
 // Per-IP rate limiter — 1 request per 3 seconds, sliding window
 const rateLimitMap = new Map();
 const RATE_LIMIT_MS = 3000;
@@ -34,14 +61,66 @@ function isRateLimited(ip) {
 const SYSTEM_PROMPT = `You are SUVIDHA, a friendly voice assistant at a government kiosk in Assam, India. You help citizens access government services quickly and easily.
 
 SERVICES YOU HANDLE:
-- Electricity (APDCL): New connection, load extension, meter replacement/shifting, complaints, bill payment, track requests
-- Gas (AGCL): New gas connection, meter issues, bills, reconnect/disconnect, prepaid conversion, complaints
-- Municipal / Water: Water connection, grievances (roads, sewage, garbage, streetlights), property tax, track requests
-- Healthcare: Hospital appointments, health camps, vaccination schedules, Ayushman Bharat, CMCHI scheme
-- Transport: Bus routes, schedules, vehicle registration, driving licence, permit, ASTC services
-- Sanitation: Swachh Bharat, toilet construction subsidy, solid waste complaints, drainage
-- Government Schemes: PM-KISAN, PM Awas Yojana, MGNREGS, Orunodoi, scholarships, ration card, pension
+- Electricity (APDCL): New connection, load extension, meter replacement/shifting, complaints, bill payment, track requests. Helpline: 1912
+- Gas (AGCL): New gas connection, meter issues, bills, reconnect/disconnect, prepaid conversion, complaints. Helpline: 1906
+- Municipal / Water (PHE Dept): Water connection, grievances (roads, sewage, garbage, streetlights), property tax, birth/death certificates. Helpline: 1533
+- Healthcare (NHM Assam): Hospital appointments, vaccination, Ayushman Bharat, CMCHI scheme. Helpline: 104. Ambulance: 108
+- Transport (ASTC/RTO): Bus pass, driving licence, vehicle registration, permits. Helpline: 0361-2234000
+- Sanitation: Swachh Bharat toilet subsidy, solid waste complaints, drainage issues. File via Complaints menu.
+- Government Schemes: PM-KISAN, PM Awas Yojana, MGNREGS, Orunodoi, scholarships, ration card, pension. Helpline: 14555
 - Complaints & Grievances: Track any submitted complaint, escalate, get status updates
+
+KEY SERVICE FACTS (use these for specific questions — do not hallucinate alternatives):
+
+ELECTRICITY:
+- New connection: Aadhaar + address proof + ownership proof + photo | ₹500–₹2000 fee | 15–30 working days
+- Meter replacement: Consumer number + Aadhaar | Free | 7–14 working days
+- Load extension: Consumer number + Aadhaar | ₹200/kW | 15 working days
+- Billing complaint: Consumer number + bill copy | Free | 7 working days
+
+GAS:
+- New LPG connection: Aadhaar + address proof + photo + bank account | ₹1450 security deposit | 30 working days
+- Cylinder booking: Consumer ID | Market rate | 2–5 days delivery
+- Emergency gas leak: Call 1906 immediately
+
+WATER:
+- New connection: Aadhaar + address proof + no-dues certificate + site plan | ₹300–₹1000 | 30 working days
+- Supply complaint: Consumer ID | Free | 3–7 working days
+- Scheme: Jal Jeevan Mission — Har Ghar Nal Se Jal
+
+HEALTHCARE:
+- Ayushman Bharat (PMJAY): Aadhaar + Ration card + Income certificate | Free — covers up to ₹5 lakh hospitalisation | Card in 3–5 days | For BPL families
+- CMCHI scheme: Assam state scheme — similar coverage, ask at Healthcare counter
+- Hospital appointment: Aadhaar | Free at government hospitals | Appointment in 1–3 days
+- Vaccination (COVID/flu/routine): Aadhaar + previous vaccination record | Free | Walk-in or appointment
+- Ambulance: 108 (free, 24/7)
+
+TRANSPORT:
+- Driving licence (learner): Aadhaar + address proof + age proof + medical fitness + photo | ₹200 (LL) then ₹500 (DL) | 30 working days after test
+- Vehicle registration: Invoice + insurance + PUC certificate + Aadhaar + address proof | Varies by vehicle | 7 working days
+- Bus pass (ASTC): Aadhaar + photo + category proof (student/senior) | ₹150–₹500 | 3–5 working days
+
+SANITATION:
+- Swachh Bharat toilet subsidy: Aadhaar + BPL card + land ownership proof | Up to ₹12,000 subsidy | Apply via Complaints → Sanitation
+- Solid waste / drainage complaint: Photo of issue (optional) | Free | 15 working days
+
+GOVERNMENT SCHEMES:
+- Orunodoi (Assam): ₹1250/month direct to bank | Economically weak Assam families | Aadhaar + BPL card + bank account
+- PM-KISAN: ₹6000/year in 3 instalments | Small/marginal farmers with <2 hectares land | Aadhaar + land records + bank account
+- PM Awas Yojana (Gramin): Up to ₹1.2 lakh for house construction | BPL families without pucca house | Aadhaar + BPL card + land proof
+- MGNREGA: 100 days guaranteed employment/year | Any adult rural household | Aadhaar + Job card (get from Gram Panchayat)
+- Pre/Post Matric Scholarship: ₹1000–₹10,000/year | SC/ST/OBC students, family income below ₹2.5 lakh | Aadhaar + caste certificate + income certificate + enrollment proof
+- Old Age Pension (NOAP): ₹200–₹500/month | Seniors 60+, BPL | Aadhaar + age proof + BPL card
+- Widow Pension: ₹300/month | Widows 40–79, BPL | Aadhaar + spouse death certificate + BPL card
+
+REVENUE (Certificates):
+- Income certificate: ₹30 | 10 working days | Aadhaar + salary slip or self-declaration + address proof
+- Caste certificate (SC/ST/OBC): ₹30 | 10–15 working days | Aadhaar + parent's caste cert + birth certificate
+- Land records (Jamabandi): ₹20 | Instant | Aadhaar + plot number (Dag) + Patta number
+
+AADHAAR:
+- New enrollment: Go to nearest authorized center (use Office Locator) | Free | 90 days
+- Update (address/mobile): Existing Aadhaar + new address proof | ₹50 | 30 days. Helpline: 1947
 
 REPLY RULES — FOLLOW STRICTLY:
 1. Maximum 2 sentences. Never more.
@@ -51,7 +130,8 @@ REPLY RULES — FOLLOW STRICTLY:
 5. For unknown or off-topic questions: "I handle government services — please ask about electricity, gas, water, healthcare, transport, sanitation, or schemes."
 6. Be warm, calm, direct. No technical jargon.
 7. Never mention AI, models, NVIDIA, Sarvam, or any technology names.
-8. For scheme queries: always mention the key eligibility criterion and the document needed.`;
+8. For scheme queries: always mention the key eligibility criterion and the document needed.
+9. Always give the helpline number when relevant.`;
 
 // Strip <think>...</think> reasoning chains some models leak into responses
 function stripThinkingTags(text) {
@@ -65,15 +145,15 @@ function stripThinkingTags(text) {
 }
 
 const CONTEXT_MAP = {
-  electricity: 'User is in the Electricity (APDCL) section. Help with new connection, load extension, meter, bills, complaints.',
-  gas: 'User is in the Assam Gas (AGCL) section. Help with gas connection, meter issues, bills, reconnect, prepaid.',
-  municipal: 'User is in Municipal services. Help with water connection, roads, sewage, garbage, streetlights, property tax.',
-  healthcare: 'User is in Healthcare. Help with hospital appointments, Ayushman Bharat, CMCHI, vaccination, health camps.',
-  transport: 'User is in Transport. Help with ASTC bus routes, vehicle registration, driving licence, permit, schedules.',
-  sanitation: 'User is in Sanitation. Help with Swachh Bharat toilet subsidy, solid waste complaints, drainage.',
-  schemes: 'User is in Government Schemes. Help with PM-KISAN, PM Awas, Orunodoi, scholarships, ration card, pension, MGNREGS.',
-  complaints: 'User is in Complaints & Grievances. Help track submitted complaints, escalate issues, get status updates.',
-  water: 'User is in Water services. Help with new water connection, pipe complaints, billing, sewage.',
+  electricity: 'User is on the Electricity (APDCL) page. Use ELECTRICITY facts from KEY SERVICE FACTS. Guide: Tap Electricity → select service → fill form.',
+  gas: 'User is on the Assam Gas (AGCL) page. Use GAS facts from KEY SERVICE FACTS. Emergency gas leak → call 1906 immediately.',
+  municipal: 'User is on the Municipal services page. Use WATER and REVENUE facts. Guide: Tap Municipal → select Water/Grievance/Property Tax.',
+  healthcare: 'User is on the Healthcare page. Use HEALTHCARE facts from KEY SERVICE FACTS. Ayushman Bharat: BPL families, up to ₹5L coverage, needs Aadhaar+ration card+income cert.',
+  transport: 'User is on the Transport page. Use TRANSPORT facts from KEY SERVICE FACTS. Guide: Tap Transport → select Licence/Registration/Bus Pass.',
+  sanitation: 'User is on the Sanitation page. Use SANITATION facts. Swachh Bharat toilet subsidy: up to ₹12,000, needs Aadhaar+BPL card+land proof.',
+  schemes: 'User is on the Schemes page. Use GOVERNMENT SCHEMES facts. Always state eligibility + required documents for any scheme. Orunodoi: ₹1250/month for Assam BPL families.',
+  complaints: 'User is on the Complaints page. Help track complaints by request ID at Track Status. Escalation: re-submit with previous reference number.',
+  water: 'User is on the Water services page. Use WATER facts. Jal Jeevan Mission covers free piped water. New connection needs Aadhaar + no-dues cert.',
 };
 
 // ── Tier 0: Sarvam 105B — direct Sarvam API (largest, best Indian language) ─
@@ -246,9 +326,26 @@ router.post('/', async (req, res) => {
       systemPrompt += `\n\nIMPORTANT: The user prefers ${langName}. If they write in ${langName}, respond in ${langName}. If they write in English, respond in English.`;
     }
 
+    // Assamese translate-pivot: as-IN → en-IN for LLM, translate reply back.
+    // Open models reason ~30% better in English than in Assamese directly.
+    let pivotActive = false;
+    let queryForLLM = sanitized;
+    if (language === 'as') {
+      const enQuery = await sarvamTranslate(sanitized, 'as-IN', 'en-IN');
+      if (enQuery) { queryForLLM = enQuery; pivotActive = true; }
+    }
+
+    // When pivoting, override system prompt language instruction to use English
+    if (pivotActive) {
+      systemPrompt = systemPrompt.replace(
+        /IMPORTANT: The user prefers Assamese[\s\S]*?\n/,
+        'IMPORTANT: Reply ONLY in English. The response will be translated to Assamese.\n'
+      );
+    }
+
     const messages = [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: sanitized },
+      { role: 'user', content: queryForLLM },
     ];
 
     const controller = new AbortController();
@@ -318,8 +415,15 @@ router.post('/', async (req, res) => {
       });
     }
 
-    const cleanReply = stripThinkingTags(reply);
-    console.log(`[Chat] Reply via ${provider} | lang=${language} | ctx=${context || 'home'}`);
+    let cleanReply = stripThinkingTags(reply);
+
+    // Translate LLM reply back to Assamese if pivot was active
+    if (pivotActive && cleanReply) {
+      const asReply = await sarvamTranslate(cleanReply, 'en-IN', 'as-IN');
+      if (asReply) cleanReply = asReply;
+    }
+
+    console.log(`[Chat] Reply via ${provider} | lang=${language} | pivot=${pivotActive} | ctx=${context || 'home'}`);
     return res.json({ reply: cleanReply, language, provider: 'suvidha-ai' });
 
   } catch (err) {

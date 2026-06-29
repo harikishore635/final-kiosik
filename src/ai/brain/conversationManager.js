@@ -17,6 +17,54 @@ import { detectLanguage, setLanguagePreference } from './multilingualProcessor.j
 import { semanticMatch, prewarmSemanticMatcher } from './semanticIntentMatcher.js';
 import { INTENT_TO_PATH } from './intentRouter.js';
 import { needsPivot, processWithEnglishPivot } from './translatePivot.js';
+import SERVICE_KNOWLEDGE from '../prompts/serviceKnowledge.js';
+
+// ── Offline knowledge lookup ──────────────────────────────────────────────────
+// When server is unreachable: match query against static knowledge base keywords.
+// Not a vector search — keyword scan of service names + descriptions.
+// Covers the most common "what documents / fee / timeframe" questions offline.
+const KEYWORD_TO_CATEGORY = {
+  electricity: 'electricity', 'electric': 'electricity', 'bijli': 'electricity',
+  'বিজুলী': 'electricity', 'apdcl': 'electricity', 'meter': 'electricity',
+  gas: 'gas', 'lpg': 'gas', 'agcl': 'gas', 'cylinder': 'gas', 'গেছ': 'gas',
+  water: 'water', 'পানী': 'water', 'jal': 'water', 'pipe': 'water',
+  municipal: 'municipal', 'property tax': 'municipal', 'birth certificate': 'municipal',
+  healthcare: 'healthcare', 'hospital': 'healthcare', 'ayushman': 'healthcare',
+  'স্বাস্থ্য': 'healthcare', 'vaccination': 'healthcare', 'ambulance': 'healthcare',
+  transport: 'transport', 'bus': 'transport', 'licence': 'transport', 'license': 'transport',
+  'vehicle': 'transport', 'astc': 'transport', 'পৰিবহন': 'transport',
+  scheme: 'schemes', 'orunodoi': 'schemes', 'pm-kisan': 'schemes', 'kisan': 'schemes',
+  'pension': 'schemes', 'scholarship': 'schemes', 'অৰুণোদয়': 'schemes',
+  sanitation: 'municipal', 'toilet': 'municipal', 'swachh': 'municipal',
+  aadhaar: 'aadhaar', 'আধাৰ': 'aadhaar', 'uid': 'aadhaar',
+  income: 'revenue', 'caste': 'revenue', 'land record': 'revenue',
+};
+
+function offlineKnowledgeReply(userMessage, language) {
+  const lower = userMessage.toLowerCase();
+  let matchedCat = null;
+  for (const [kw, cat] of Object.entries(KEYWORD_TO_CATEGORY)) {
+    if (lower.includes(kw) || userMessage.includes(kw)) { matchedCat = cat; break; }
+  }
+
+  if (!matchedCat) return null;
+  const cat = SERVICE_KNOWLEDGE[matchedCat];
+  if (!cat) return null;
+
+  const services = cat.services || cat.list || [];
+  if (!services.length) return null;
+
+  const lines = services.map(s => {
+    const docs = s.documents?.join(', ') || '';
+    const fee = s.fee ? ` | Fee: ${s.fee}` : '';
+    const time = s.timeframe ? ` | Time: ${s.timeframe}` : '';
+    return `${s.name}${docs ? ` — Docs: ${docs}` : ''}${fee}${time}`;
+  });
+
+  const helpline = cat.helpline ? ` Helpline: ${cat.helpline}.` : '';
+  const reply = `${cat.department} — ${lines[0]}.${helpline} Tap ${matchedCat} in the menu to apply.`;
+  return reply;
+}
 
 // Pre-warm MiniLLM in background — first real use will be instant
 prewarmSemanticMatcher();
@@ -86,17 +134,17 @@ export async function processConversationTurn(userMessage, options = {}) {
     if (needsPivot(language)) {
       // Assamese: translate AS→EN, call server in EN, translate EN→AS
       aiResponse = await processWithEnglishPivot(userMessage, language, currentPath, callServerChatProxy);
-      if (!aiResponse) aiResponse = buildOfflineResponse(language);
+      if (!aiResponse) aiResponse = buildOfflineResponse(language, userMessage);
     } else {
       const reply = await callServerChatProxy(userMessage, language, currentPath);
       aiResponse = reply
         ? { response: reply, language }
-        : buildOfflineResponse(language);
+        : buildOfflineResponse(language, userMessage);
     }
     console.log('[ConversationManager] Server chat ok, lang:', language);
   } catch (err) {
     console.error('[ConversationManager] AI call failed:', err.message);
-    aiResponse = buildOfflineResponse(language);
+    aiResponse = buildOfflineResponse(language, userMessage);
   }
 
   aiResponse = normaliseAIResponse(aiResponse, language);
@@ -146,7 +194,24 @@ function buildErrorResponse(reason = '', language = 'en') {
   };
 }
 
-function buildOfflineResponse(language = 'en') {
+function buildOfflineResponse(language = 'en', userMessage = '') {
+  // Try static knowledge base first — answers "what docs / fee" questions offline
+  const knowledgeReply = userMessage ? offlineKnowledgeReply(userMessage, language) : null;
+  if (knowledgeReply) {
+    return {
+      intent: 'service_info',
+      response: knowledgeReply,
+      speechSummary: knowledgeReply,
+      language,
+      confidence: 0.6,
+      action: null,
+      followUp: null,
+      suggestions: [],
+      offline: true,
+      source: 'knowledge-base',
+    };
+  }
+
   const msgs = {
     hi: 'सेवा अभी उपलब्ध नहीं। कृपया मेनू का उपयोग करें।',
     as: 'সেৱা এতিয়া উপলব্ধ নহয়। মেনু ব্যৱহাৰ কৰক।',
